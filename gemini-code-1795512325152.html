@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TNPDS Smart Ration & Queue Management System — FPS #TN07CS8014</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Supabase Realtime JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Multilingual Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Noto+Sans+Kannada:wght@400;600;700;800&family=Noto+Sans+Malayalam:wght@400;600;700;800&family=Noto+Sans+Tamil:wght@400;600;700;800&family=Noto+Sans+Telugu:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: [
+                            'Inter', 'Noto Sans Tamil', 'Noto Sans Devanagari',
+                            'Noto Sans Telugu', 'Noto Sans Malayalam',
+                            'Noto Sans Kannada', 'Noto Sans Arabic', 'sans-serif'
+                        ],
+                    },
+                    colors: {
+                        tnEmerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        },
+                        tnGold: {
+                            100: '#fef3c7',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html.font-large { font-size: 112.5%; }
+        body.high-contrast { background-color: #ffffff !important; color: #000000 !important; }
+        body.high-contrast .border-slate-200 { border-color: #0f172a !important; border-width: 2px !important; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slideUp 0.25s ease-out forwards; }
+
+        @keyframes pulseHighlight {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35); }
+            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        }
+        .stock-pulse { animation: pulseHighlight 1.2s ease-out; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-qr-pass, #printable-qr-pass * { visibility: visible; }
+            #printable-qr-pass {
+                position: fixed; left: 50%; top: 20px; transform: translateX(-50%);
+                width: 360px; border: 2px solid #064e3b; padding: 20px; background: #fff;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-tnEmerald-600 selection:text-white">
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[60] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Top Navigation Header -->
+    <header class="bg-gradient-to-r from-tnEmerald-950 via-tnEmerald-900 to-teal-900 text-white sticky top-0 z-40 shadow-xl border-b-2 border-tnGold-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <!-- Brand & Sync Status -->
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur border border-tnGold-400/50 flex items-center justify-center shrink-0 shadow-inner">
+                            <i data-lucide="wheat" class="w-6 h-6 text-tnGold-400"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-[11px] font-extrabold uppercase tracking-wider bg-tnGold-500 text-tnEmerald-950 px-2 py-0.5 rounded-md">
+                                    TNPDS LIVE
+                                </span>
+                                <span class="text-xs font-medium text-emerald-200 flex items-center gap-1">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-tnGold-400"></i>
+                                    <span id="header-shop-name">FPS #TN07CS8014</span>
+                                </span>
+                                <span id="header-shop-status" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                                    ● OPEN
+                                </span>
+                                <span id="sync-status-pill" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30">
+                                    ● Connecting...
+                                </span>
+                            </div>
+                            <h1 data-i18n="appTitle" class="text-base sm:text-lg font-extrabold tracking-tight text-white mt-0.5">
+                                Tamil Nadu Smart Ration & Queue System
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Language Dropdown & Portal Switcher -->
+                <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                    <div class="relative flex items-center bg-white/10 border border-white/15 rounded-xl px-2.5 py-1.5">
+                        <i data-lucide="languages" class="w-4 h-4 text-tnGold-300 shrink-0 mr-1.5"></i>
+                        <select id="header-lang-select" onchange="setAppLanguage(this.value)" aria-label="Select Language"
+                            class="bg-transparent text-xs font-bold text-white outline-none cursor-pointer pr-1">
+                            <option value="en" class="text-slate-900">English</option>
+                            <option value="ta" class="text-slate-900">தமிழ் (Tamil)</option>
+                            <option value="hi" class="text-slate-900">हिन्दी (Hindi)</option>
+                            <option value="te" class="text-slate-900">తెలుగు (Telugu)</option>
+                            <option value="ml" class="text-slate-900">മലയാളം (Malayalam)</option>
+                            <option value="kn" class="text-slate-900">ಕನ್ನಡ (Kannada)</option>
+                            <option value="ar" class="text-slate-900">العربية (Arabic)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center bg-tnEmerald-950/80 p-1 rounded-xl border border-white/15 flex-1 md:flex-initial">
+                        <button id="btn-portal-user" onclick="switchPortal('user')" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-tnEmerald-950 shadow">
+                            <i data-lucide="id-card" class="w-4 h-4"></i>
+                            <span data-i18n="userPortalBtn">Beneficiary Portal</span>
+                        </button>
+                        <button id="btn-portal-admin" onclick="switchPortal('admin')" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-emerald-200 hover:text-white">
+                            <i data-lucide="store" class="w-4 h-4"></i>
+                            <span data-i18n="adminPortalBtn">FPS Dealer Admin</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- PORTAL 1: BENEFICIARY PORTAL                                          -->
+    <!-- ===================================================================== -->
+    <main id="portal-user" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- A. SECURE BENEFICIARY AUTH (SIGN IN / REGISTER WITH UNIQUE RATION NO + PASSWORD) -->
+        <div id="user-login-screen" class="max-w-md mx-auto mt-4 bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden animate-slide-up">
+            <div class="bg-gradient-to-br from-tnEmerald-900 to-teal-800 p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider bg-tnGold-500 text-tnEmerald-950 px-2.5 py-0.5 rounded-full">
+                            e-Ration Verified Access
+                        </span>
+                        <h2 data-i18n="loginHeading" class="text-xl font-extrabold mt-2">Beneficiary Secure Access</h2>
+                        <p data-i18n="loginSub" class="text-xs text-emerald-200 mt-1">Unique Ration Card & Password Protected</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-tnGold-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auth Mode Switcher -->
+            <div class="p-2 bg-slate-100 grid grid-cols-2 gap-1.5 border-b border-slate-200">
+                <button type="button" id="auth-tab-login" onclick="switchAuthMode('login')"
+                    class="py-2.5 rounded-xl text-xs font-extrabold transition bg-white text-tnEmerald-900 shadow-sm">
+                    <span data-i18n="tabSignIn">Sign In</span>
+                </button>
+                <button type="button" id="auth-tab-register" onclick="switchAuthMode('register')"
+                    class="py-2.5 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900">
+                    <span data-i18n="tabRegister">New Registration</span>
+                </button>
+            </div>
+
+            <!-- SIGN IN FORM -->
+            <form id="form-user-login" onsubmit="handleUserLogin(event)" class="p-6 space-y-4">
+                <div>
+                    <label data-i18n="lblRationNo" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Smart Ration Card Number
+                    </label>
+                    <div class="relative">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="login-card-input" required minlength="6" maxlength="16" placeholder="e.g. 333001234567"
+                            class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-tnEmerald-600 outline-none font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label data-i18n="lblPassword" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Beneficiary Password
+                    </label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="password" id="login-pass-input" required minlength="4" placeholder="Enter your password"
+                            class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-tnEmerald-600 outline-none">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
+                    <span data-i18n="btnSignIn">Sign In to Ration Portal</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+                <p class="text-[11px] text-center text-slate-500">
+                    First time here? <button type="button" onclick="switchAuthMode('register')" class="text-tnEmerald-700 font-bold underline">Register your Smart Card</button>
+                </p>
+            </form>
+
+            <!-- NEW REGISTRATION FORM -->
+            <form id="form-user-register" onsubmit="handleUserRegister(event)" class="hidden p-6 space-y-3.5">
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-[11px] text-emerald-900 flex items-start gap-2">
+                    <i data-lucide="fingerprint" class="w-4 h-4 text-tnEmerald-700 shrink-0 mt-0.5"></i>
+                    <span>Each Smart Ration Card Number can only be registered <strong>once</strong> to prevent duplicate accounts.</span>
+                </div>
+
+                <div>
+                    <label data-i18n="lblRationNo" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                        Unique Smart Ration Card Number
+                    </label>
+                    <input type="text" id="reg-card-input" required minlength="6" maxlength="16" placeholder="e.g. 333001234567"
+                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold font-mono focus:ring-2 focus:ring-tnEmerald-600 outline-none">
+                </div>
+
+                <div>
+                    <label data-i18n="lblCardHolder" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                        Family Head Full Name
+                    </label>
+                    <input type="text" id="reg-name-input" required placeholder="e.g. Karthikeyan S"
+                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-tnEmerald-600 outline-none">
+                </div>
+
+                <div>
+                    <label data-i18n="lblMobile" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                        10-Digit Mobile Number
+                    </label>
+                    <input type="tel" id="reg-mobile-input" required pattern="[0-9]{10}" maxlength="10" placeholder="e.g. 9876543210"
+                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold font-mono focus:ring-2 focus:ring-tnEmerald-600 outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label data-i18n="lblCreatePass" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            Create Password
+                        </label>
+                        <input type="password" id="reg-pass-input" required minlength="4" placeholder="Min 4 chars"
+                            class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-tnEmerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label data-i18n="lblConfirmPass" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                            Confirm Password
+                        </label>
+                        <input type="password" id="reg-pass2-input" required minlength="4" placeholder="Re-enter"
+                            class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-tnEmerald-600 outline-none">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span data-i18n="btnCreateAccount">Create Unique Account & Enter</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- B. BENEFICIARY WORKSPACE -->
+        <div id="user-workspace" class="hidden grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- Sidebar -->
+            <aside class="lg:col-span-3 space-y-4">
+                <div class="bg-gradient-to-br from-tnEmerald-900 via-tnEmerald-800 to-teal-900 text-white rounded-2xl p-4 shadow-md border border-tnEmerald-700">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <span id="card-type-badge" class="text-[10px] font-extrabold uppercase tracking-wider bg-tnGold-500 text-tnEmerald-950 px-2 py-0.5 rounded">
+                            PHH • SMART CARD
+                        </span>
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-300"></i>
+                    </div>
+                    <p class="text-[11px] text-emerald-200 uppercase tracking-wider" data-i18n="lblFamilyHead">Family Head</p>
+                    <h3 id="sidebar-user-name" class="text-base font-extrabold truncate">—</h3>
+                    <p id="sidebar-user-card" class="font-mono text-xs text-tnGold-300 mt-1 tracking-wider">—</p>
+                    <p id="sidebar-user-mobile" class="font-mono text-[11px] text-emerald-200 mt-0.5 flex items-center gap-1">
+                        <i data-lucide="phone" class="w-3 h-3"></i><span>—</span>
+                    </p>
+                    <div class="mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-[11px] text-emerald-100">
+                        <span id="sidebar-orders-count">0 Orders</span>
+                        <span class="font-mono font-bold">TN07CS8014</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex lg:flex-col gap-1.5 overflow-x-auto">
+                    <button onclick="switchUserTab('stocks')" id="utab-stocks" class="user-nav-btn flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition bg-tnEmerald-700 text-white shadow-sm whitespace-nowrap">
+                        <span class="flex items-center gap-2.5">
+                            <i data-lucide="shopping-basket" class="w-4 h-4 shrink-0"></i>
+                            <span data-i18n="navStocks">Order Stocks & Cart</span>
+                        </span>
+                        <span id="nav-cart-badge" class="hidden bg-tnGold-500 text-tnEmerald-950 text-[10px] font-extrabold px-2 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button onclick="switchUserTab('queue')" id="utab-queue" class="user-nav-btn flex-1 lg:flex-initial flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition text-slate-600 hover:bg-slate-100 whitespace-nowrap">
+                        <i data-lucide="qr-code" class="w-4 h-4 shrink-0"></i>
+                        <span data-i18n="navQueue">Queue Token & QR</span>
+                    </button>
+                    <button onclick="switchUserTab('history')" id="utab-history" class="user-nav-btn flex-1 lg:flex-initial flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition text-slate-600 hover:bg-slate-100 whitespace-nowrap">
+                        <i data-lucide="receipt" class="w-4 h-4 shrink-0"></i>
+                        <span data-i18n="navHistory">My Buying History</span>
+                    </button>
+                    <button onclick="switchUserTab('settings')" id="utab-settings" class="user-nav-btn flex-1 lg:flex-initial flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition text-slate-600 hover:bg-slate-100 whitespace-nowrap">
+                        <i data-lucide="settings" class="w-4 h-4 shrink-0"></i>
+                        <span data-i18n="navSettings">Settings & Language</span>
+                    </button>
+                </nav>
+
+                <button onclick="logoutUser()" class="w-full bg-white hover:bg-rose-50 text-rose-700 border border-slate-200 hover:border-rose-200 font-bold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span data-i18n="btnLogout">Sign Out</span>
+                </button>
+            </aside>
+
+            <!-- Right Content Canvas -->
+            <div class="lg:col-span-9 space-y-6">
+
+                <!-- ========================================================= -->
+                <!-- USER TAB 1: INTERACTIVE STOCKS & ADD TO CART              -->
+                <!-- ========================================================= -->
+                <div id="uview-stocks" class="space-y-5 animate-slide-up">
+                    <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="shopping-bag" class="w-5 h-5 text-tnEmerald-700"></i>
+                                <span data-i18n="stockHeading">Live FPS Stock & Interactive Ration Cart</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5" data-i18n="stockSub">Choose commodities and quantities within your quota — stock syncs live with FPS Admin</p>
+                        </div>
+                        <button onclick="openCartDrawer()" class="bg-tnEmerald-900 hover:bg-tnEmerald-800 text-white px-4 py-2.5 rounded-2xl shadow-md transition flex items-center justify-center gap-2.5 text-xs font-extrabold shrink-0">
+                            <i data-lucide="shopping-cart" class="w-4 h-4 text-tnGold-400"></i>
+                            <span data-i18n="btnViewCart">View Cart</span>
+                            <span id="header-cart-count" class="bg-tnGold-500 text-tnEmerald-950 px-2 py-0.5 rounded-full text-[11px] font-extrabold">0</span>
+                        </button>
+                    </div>
+
+                    <div id="user-stocks-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                        <!-- Dynamically rendered interactive product cards -->
+                    </div>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- USER TAB 2: QUEUE TOKEN & LIVE QR RADAR                   -->
+                <!-- ========================================================= -->
+                <div id="uview-queue" class="hidden space-y-6 animate-slide-up">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                            <p class="text-[11px] font-bold uppercase text-slate-400" data-i18n="kpiServing">Now Serving</p>
+                            <p id="u-kpi-serving" class="text-2xl sm:text-3xl font-extrabold text-tnEmerald-800 font-mono mt-1">#100</p>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                            <p class="text-[11px] font-bold uppercase text-slate-400" data-i18n="kpiYourToken">Your Token</p>
+                            <p id="u-kpi-mytoken" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-1">—</p>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                            <p class="text-[11px] font-bold uppercase text-slate-400" data-i18n="kpiAhead">Ahead of You</p>
+                            <p id="u-kpi-ahead" class="text-2xl sm:text-3xl font-extrabold text-amber-600 font-mono mt-1">—</p>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                            <p class="text-[11px] font-bold uppercase text-slate-400" data-i18n="kpiWait">Est. Wait Time</p>
+                            <p id="u-kpi-wait" class="text-2xl sm:text-3xl font-extrabold text-teal-700 font-mono mt-1">—</p>
+                        </div>
+                    </div>
+
+                    <div id="u-booking-card" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-gradient-to-r from-tnEmerald-900 to-teal-800 px-6 py-4 text-white">
+                            <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-5 h-5 text-tnGold-400"></i>
+                                <span data-i18n="fastBookTitle">1-Tap Instant Queue Token Booking</span>
+                            </h2>
+                            <p class="text-xs text-emerald-200 mt-0.5" data-i18n="fastBookSub">Pick a convenient time window and generate your QR pass in 1 click</p>
+                        </div>
+                        <div class="p-6 space-y-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <button type="button" onclick="selectTimeSlot('Morning (8:00 - 11:00 AM)')" data-slot="Morning (8:00 - 11:00 AM)"
+                                    class="slot-pill p-3.5 rounded-2xl border-2 border-tnEmerald-600 bg-tnEmerald-50/70 text-left transition">
+                                    <span class="text-xs font-extrabold text-tnEmerald-900">Morning Slot</span>
+                                    <p class="text-sm font-bold text-slate-900 mt-1">8:00 – 11:00 AM</p>
+                                </button>
+                                <button type="button" onclick="selectTimeSlot('Midday (11:00 AM - 2:00 PM)')" data-slot="Midday (11:00 AM - 2:00 PM)"
+                                    class="slot-pill p-3.5 rounded-2xl border border-slate-200 hover:border-tnEmerald-400 bg-white text-left transition">
+                                    <span class="text-xs font-extrabold text-slate-600">Midday Slot</span>
+                                    <p class="text-sm font-bold text-slate-900 mt-1">11:00 AM – 2:00 PM</p>
+                                </button>
+                                <button type="button" onclick="selectTimeSlot('Evening (4:00 - 7:00 PM)')" data-slot="Evening (4:00 - 7:00 PM)"
+                                    class="slot-pill p-3.5 rounded-2xl border border-slate-200 hover:border-tnEmerald-400 bg-white text-left transition">
+                                    <span class="text-xs font-extrabold text-slate-600">Evening Slot</span>
+                                    <p class="text-sm font-bold text-slate-900 mt-1">4:00 – 7:00 PM</p>
+                                </button>
+                            </div>
+
+                            <button onclick="bookTokenOneTap()"
+                                class="w-full bg-gradient-to-r from-tnEmerald-700 to-teal-700 hover:from-tnEmerald-800 hover:to-teal-800 text-white font-extrabold py-4 px-6 rounded-2xl shadow-lg transition flex items-center justify-center gap-3 text-base">
+                                <i data-lucide="ticket" class="w-5 h-5 text-tnGold-300"></i>
+                                <span data-i18n="btnBookNow">Book Instant Token (1-Tap)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="u-active-pass-card" class="hidden bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden">
+                        <div class="bg-gradient-to-r from-tnEmerald-950 via-tnEmerald-900 to-teal-900 px-6 py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h2 class="font-extrabold text-base sm:text-lg" data-i18n="activePassTitle">Live Queue Radar & Digital QR Pass</h2>
+                            <span id="u-pass-slot-badge" class="text-xs font-bold bg-tnGold-500 text-tnEmerald-950 px-3 py-1 rounded-full">Morning</span>
+                        </div>
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                            <div class="md:col-span-7 space-y-4">
+                                <div id="u-turn-banner" class="rounded-2xl p-4 bg-amber-50 border border-amber-200">
+                                    <p class="text-xs font-bold uppercase text-amber-800" data-i18n="lblQueueStatus">Live Queue Position</p>
+                                    <h3 id="u-status-headline" class="text-lg font-extrabold text-slate-900 mt-0.5">—</h3>
+                                    <p id="u-status-subtext" class="text-xs text-slate-600 mt-1">—</p>
+                                </div>
+                                <div class="flex flex-wrap gap-2.5">
+                                    <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-3 px-4 rounded-xl transition flex items-center gap-1.5">
+                                        <i data-lucide="printer" class="w-4 h-4"></i>
+                                        <span data-i18n="btnPrintPass">Print Pass</span>
+                                    </button>
+                                    <button onclick="cancelUserToken()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold py-3 px-4 rounded-xl transition">
+                                        <span data-i18n="btnCancelToken">Cancel Token</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="printable-qr-pass" class="md:col-span-5 bg-slate-50 border-2 border-dashed border-tnEmerald-600/50 rounded-2xl p-5 flex flex-col items-center text-center">
+                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-tnEmerald-800 bg-tnEmerald-100 px-2.5 py-0.5 rounded-full">
+                                    FPS #TN07CS8014 E-PASS
+                                </span>
+                                <div id="u-qr-token-big" class="text-4xl font-extrabold font-mono text-tnEmerald-950 my-2">#101</div>
+                                <div id="user-qrcode-box" class="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center min-h-[164px] min-w-[164px]"></div>
+                                <p id="u-qr-card-label" class="font-mono text-xs font-bold text-slate-700 mt-3">—</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- USER TAB 3: UNIQUE BUYING HISTORY (REAL ORDERS ONLY)      -->
+                <!-- ========================================================= -->
+                <div id="uview-history" class="hidden space-y-5 animate-slide-up">
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div>
+                                <h2 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                                    <i data-lucide="file-check-2" class="w-5 h-5 text-tnEmerald-700"></i>
+                                    <span data-i18n="historyHeading">My Verified Buying History & e-Receipts</span>
+                                </h2>
+                                <p class="text-xs text-slate-500 mt-0.5" data-i18n="historySub">Live record uniquely tied to your Smart Ration Card Number</p>
+                            </div>
+                        </div>
+                        <div id="user-receipts-list" class="mt-5 space-y-3">
+                            <!-- Dynamically populated from real user orders -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- USER TAB 4: SETTINGS & 7-LANGUAGE SELECTOR                -->
+                <!-- ========================================================= -->
+                <div id="uview-settings" class="hidden space-y-6 animate-slide-up">
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-900 px-6 py-4 text-white">
+                            <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2">
+                                <i data-lucide="sliders-horizontal" class="w-5 h-5 text-tnGold-400"></i>
+                                <span data-i18n="settingsHeading">Language & Accessibility Preferences</span>
+                            </h2>
+                        </div>
+                        <div class="p-6 space-y-6">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+                                    <i data-lucide="languages" class="w-4 h-4 text-tnEmerald-700"></i>
+                                    <span data-i18n="setLangTitle">Choose Application Language</span>
+                                </h3>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="settings-lang-grid">
+                                    <button onclick="setAppLanguage('en')" data-lang="en" class="lang-card px-3 py-2.5 rounded-xl border text-xs font-extrabold transition">English</button>
+                                    <button onclick="setAppLanguage('ta')" data-lang="ta" class="lang-card px-3 py-2.5 rounded-xl border text-xs font-extrabold transition">தமிழ் (Tamil)</button>
+                                    <button onclick="setAppLanguage('hi')" data-lang="hi" class="lang-card px-3 py-2.5 rounded-xl border text-xs font-extrabold transition">हिन्दी (Hindi)</button>
+                                    <button onclick="setAppLanguage('te')" data-lang="te" class="lang-card px-3 py-2.5 rounded-xl border text-xs font-extrabold transition">తెలుగు (Telugu)</button>
+                                    <button onclick="setAppLanguage('ml')" data-lang="ml" class="lang-card px-3 py-2.5 rounded-xl border text-xs font-extrabold transition">മലയാളം (Malayalam)</button>
+                                    <button onclick="setAppLanguage('kn')" data-lang="kn" class="lang-card px-3 py-2.5 rounded-xl border text-xs font-extrabold transition">ಕನ್ನಡ (Kannada)</button>
+                                    <button onclick="setAppLanguage('ar')" data-lang="ar" class="lang-card px-3 py-2.5 rounded-xl border text-xs font-extrabold transition">العربية (Arabic)</button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+                                <label class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-center justify-between cursor-pointer">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 text-sm" data-i18n="setLargeText">Large Text (Elder-Friendly)</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5">Increases font size across all screens</p>
+                                    </div>
+                                    <input type="checkbox" id="toggle-large-font" onchange="toggleAccessibility()" class="w-5 h-5 accent-tnEmerald-700">
+                                </label>
+                                <label class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-center justify-between cursor-pointer">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 text-sm" data-i18n="setHighContrast">High-Contrast Mode</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5">Sharp borders & maximum legibility</p>
+                                    </div>
+                                    <input type="checkbox" id="toggle-high-contrast" onchange="toggleAccessibility()" class="w-5 h-5 accent-tnEmerald-700">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- PORTAL 2: FPS DEALER (ADMIN) PORTAL                                   -->
+    <!-- ===================================================================== -->
+    <main id="portal-admin" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- A. STRICT ADMIN DEALER LOGIN (NO DEMO OPTION) -->
+        <div id="admin-login-screen" class="max-w-md mx-auto mt-4 bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden animate-slide-up">
+            <div class="bg-slate-900 p-6 text-white border-b-4 border-tnGold-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider bg-tnGold-500 text-slate-950 px-2.5 py-0.5 rounded-full">
+                            Authorized Dealer Only
+                        </span>
+                        <h2 class="text-xl font-extrabold mt-2">FPS Dealer Admin Login</h2>
+                        <p class="text-xs text-slate-400 mt-1">Enter authorized FPS Shop Code and Dealer Security PIN</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                        <i data-lucide="key-round" class="w-6 h-6 text-tnGold-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">FPS Shop Code</label>
+                    <input type="text" id="admin-shop-input" required autocomplete="off" placeholder="Enter FPS Shop Code"
+                        class="w-full px-3.5 py-3 border border-slate-300 rounded-xl font-mono text-sm font-bold uppercase focus:ring-2 focus:ring-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Dealer Security PIN</label>
+                    <input type="password" id="admin-pin-input" required autocomplete="off" placeholder="Enter Dealer PIN"
+                        class="w-full px-3.5 py-3 border border-slate-300 rounded-xl font-mono text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
+                    <i data-lucide="unlock" class="w-4 h-4 text-tnGold-400"></i>
+                    <span>Verify & Open Dealer Console</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- B. ADMIN COMMAND CENTER WORKSPACE -->
+        <div id="admin-workspace" class="hidden space-y-6 animate-slide-up">
+            <!-- Admin Header Strip -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-slate-900 text-tnGold-400 flex items-center justify-center shrink-0">
+                        <i data-lucide="store" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-extrabold text-slate-900 text-base">FPS #TN07CS8014 — Live Dealer Command Center</h2>
+                        <p class="text-xs text-slate-500">Real-time inventory, registered beneficiaries, and live incoming orders</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="switchAdminTab('command')" id="atab-command" class="admin-nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white">
+                        Live Stocks & Queue
+                    </button>
+                    <button onclick="switchAdminTab('beneficiaries')" id="atab-beneficiaries" class="admin-nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+                        <span>Beneficiaries & History</span>
+                        <span id="admin-users-badge" class="bg-tnEmerald-600 text-white px-1.5 py-0.5 rounded-full text-[10px]">0</span>
+                    </button>
+                    <button onclick="switchAdminTab('asettings')" id="atab-asettings" class="admin-nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+                        Shop Settings
+                    </button>
+                    <button onclick="logoutAdmin()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold">
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- ADMIN KPI ROW -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                    <p class="text-[11px] font-bold uppercase text-slate-400">Registered Beneficiaries</p>
+                    <p id="a-kpi-users" class="text-3xl font-extrabold text-tnEmerald-800 font-mono mt-1">0</p>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                    <p class="text-[11px] font-bold uppercase text-slate-400">Real Orders Placed</p>
+                    <p id="a-kpi-orders" class="text-3xl font-extrabold text-indigo-700 font-mono mt-1">0</p>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                    <p class="text-[11px] font-bold uppercase text-slate-400">Total Stock Available</p>
+                    <p id="a-kpi-stock" class="text-3xl font-extrabold text-slate-900 font-mono mt-1">0</p>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                    <p class="text-[11px] font-bold uppercase text-slate-400">Queue Waiting</p>
+                    <p id="a-kpi-waiting" class="text-3xl font-extrabold text-amber-600 font-mono mt-1">0</p>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 1: LIVE STOCKS & QUEUE -->
+            <div id="aview-command" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- Right/Main 7 Cols: Live Side-by-Side Commodity Inventory -->
+                <div class="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/70">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                                <i data-lucide="package-plus" class="w-5 h-5 text-tnEmerald-700"></i>
+                                <span>Real-Time Shop Inventory</span>
+                            </h3>
+                            <p class="text-xs text-slate-500">Increases/decreases sync side-by-side with Beneficiary Portal instantly</p>
+                        </div>
+                        <button onclick="openAddCommodityModal()" class="bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5 self-start sm:self-auto">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Add Commodity</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-[11px] uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4 font-extrabold">Commodity</th>
+                                    <th class="py-3 px-4 font-extrabold">Rate</th>
+                                    <th class="py-3 px-4 font-extrabold">Live Stock</th>
+                                    <th class="py-3 px-4 font-extrabold text-right">Quick Adjust</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-stocks-tbody" class="divide-y divide-slate-200 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Left/Side 5 Cols: Live Incoming Orders + Queue Deck -->
+                <div class="lg:col-span-5 space-y-6">
+                    <!-- Real-Time Incoming Orders Feed -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-tnEmerald-950 px-5 py-3.5 text-white flex items-center justify-between">
+                            <h3 class="font-bold text-sm flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                <span>Live Order Stream</span>
+                            </h3>
+                            <button onclick="switchAdminTab('beneficiaries')" class="text-[11px] text-tnGold-300 font-bold hover:underline">View All</button>
+                        </div>
+                        <div id="admin-live-orders-feed" class="p-4 space-y-2.5 max-h-72 overflow-y-auto">
+                            <!-- Populated live -->
+                        </div>
+                    </div>
+
+                    <!-- Queue Control Deck -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-900 px-5 py-3.5 text-white flex items-center justify-between">
+                            <h3 class="font-bold text-sm flex items-center gap-2">
+                                <i data-lucide="megaphone" class="w-4 h-4 text-tnGold-400"></i>
+                                <span>Live Queue Control</span>
+                            </h3>
+                            <span id="a-deck-token" class="font-mono font-extrabold text-tnGold-400 text-sm">Serving #100</span>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <button onclick="adminCallNextToken()" class="w-full bg-tnGold-500 hover:bg-tnGold-400 text-slate-950 font-extrabold py-2.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-xs">
+                                <i data-lucide="skip-forward" class="w-4 h-4"></i>
+                                <span>Call Next Waiting Token</span>
+                            </button>
+                            <div id="admin-queue-list" class="space-y-2 max-h-56 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 2: BENEFICIARIES DIRECTORY & REAL BUYING HISTORY -->
+            <div id="aview-beneficiaries" class="hidden space-y-5">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+                        <div>
+                            <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                                <i data-lucide="users" class="w-5 h-5 text-tnEmerald-700"></i>
+                                <span>Registered Beneficiaries & Buying Histories</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Every beneficiary who registers or logs in from any device appears here with their unique history</p>
+                        </div>
+                        <div class="relative w-full sm:w-72">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" id="admin-user-search" oninput="renderAdminBeneficiaries()" placeholder="Search Name, Ration No, Mobile..."
+                                class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-tnEmerald-600">
+                        </div>
+                    </div>
+
+                    <div id="admin-beneficiaries-list" class="mt-4 space-y-3">
+                        <!-- Dynamically rendered beneficiary cards with expandable buying history -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 3: SHOP SETTINGS -->
+            <div id="aview-asettings" class="hidden bg-white rounded-3xl shadow-sm border border-slate-200 p-6 space-y-6">
+                <div class="border-b border-slate-200 pb-4">
+                    <h3 class="font-extrabold text-lg text-slate-900">FPS #TN07CS8014 Operational Settings</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Shop Counter Status</label>
+                        <select id="admin-setting-status" onchange="updateAdminShopSettings()" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold bg-white">
+                            <option value="OPEN">● OPEN — Dispensing Active</option>
+                            <option value="LUNCH">◐ LUNCH BREAK</option>
+                            <option value="CLOSED">■ CLOSED</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Avg Service Pace (Mins)</label>
+                        <input type="number" id="admin-setting-pace" min="1" max="20" value="4" onchange="updateAdminShopSettings()"
+                            class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Max Tokens Per Slot</label>
+                        <input type="number" id="admin-setting-maxtokens" min="10" max="200" value="50" onchange="updateAdminShopSettings()"
+                            class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- FLOATING CART DRAWER (BENEFICIARY)                                    -->
+    <!-- ===================================================================== -->
+    <div id="cart-drawer-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end">
+        <div class="bg-white w-full max-w-md h-full flex flex-col shadow-2xl animate-slide-up">
+            <div class="bg-tnEmerald-950 text-white px-5 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 text-tnGold-400"></i>
+                    <h3 class="font-extrabold text-base" data-i18n="cartTitle">Your Ration Cart</h3>
+                </div>
+                <button onclick="closeCartDrawer()" class="text-white/75 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="cart-items-container" class="flex-1 overflow-y-auto p-5 space-y-3">
+                <!-- Populated dynamically -->
+            </div>
+
+            <div class="border-t border-slate-200 p-5 bg-slate-50 space-y-3">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="font-bold text-slate-600" data-i18n="cartTotal">Total Payable</span>
+                    <span id="cart-total-amount" class="text-xl font-extrabold font-mono text-tnEmerald-900">₹0.00</span>
+                </div>
+                <button id="btn-checkout-cart" onclick="checkoutCart()"
+                    class="w-full bg-gradient-to-r from-tnEmerald-700 to-teal-700 hover:from-tnEmerald-800 hover:to-teal-800 disabled:opacity-50 text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-tnGold-300"></i>
+                    <span data-i18n="btnPlaceOrder">Confirm Order & Update Live Stock</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: ADD COMMODITY (ADMIN)                                          -->
+    <!-- ===================================================================== -->
+    <div id="add-commodity-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-slide-up">
+            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+                <h3 class="font-bold text-base">Add New Stock Commodity</h3>
+                <button onclick="closeAddCommodityModal()" class="text-white/75 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form onsubmit="saveNewCommodity(event)" class="p-5 space-y-3.5">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Item Name (English)</label>
+                    <input type="text" id="new-item-en" required placeholder="e.g. Pongal Gift Hamper" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Item Name (Tamil / Optional)</label>
+                    <input type="text" id="new-item-ta" placeholder="e.g. பொங்கல் பரிசு தொகுப்பு" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Custom Image URL (Optional)</label>
+                    <input type="url" id="new-item-img" placeholder="https://... (leave empty for built-in artwork)" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm">
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Stock Qty</label>
+                        <input type="number" id="new-item-qty" required min="0" value="100" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Unit</label>
+                        <select id="new-item-unit" class="w-full px-2.5 py-2 border border-slate-300 rounded-xl text-sm font-bold bg-white">
+                            <option value="kg">kg</option>
+                            <option value="Litres">Litres</option>
+                            <option value="Packets">Packets</option>
+                            <option value="Kits">Kits</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Price (₹)</label>
+                        <input type="number" id="new-item-price" required min="0" step="0.5" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Monthly Family Quota</label>
+                    <input type="number" id="new-item-quota" required min="1" value="2" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold">
+                </div>
+                <button type="submit" class="w-full bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white font-bold py-3 rounded-xl text-sm shadow">
+                    Add to Live Shop Inventory
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- CORE APPLICATION & REAL-TIME SUPABASE ENGINE                          -->
+    <!-- ===================================================================== -->
+    <script>
+        // =====================================================================
+        // 1. SUPABASE CONFIGURATION (PASTE YOUR CREDENTIALS HERE FOR CLOUD SYNC)
+        // =====================================================================
+        const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+        const isCloudConfigured =
+            SUPABASE_URL.startsWith('https://') &&
+            SUPABASE_ANON_KEY.length > 20 &&
+            !SUPABASE_URL.includes('YOUR_SUPABASE');
+
+        const supabaseClient = isCloudConfigured
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
+
+        // STRICT ADMIN CREDENTIALS (ONLY AUTHORIZED LOGIN)
+        const AUTHORIZED_SHOP_CODE = 'TN07CS8014';
+        const AUTHORIZED_DEALER_PIN = '10123';
+
+        // Local Fallback Storage Keys
+        const LKEYS = {
+            BENEFICIARIES: 'tnpds_live_beneficiaries',
+            STOCKS: 'tnpds_live_stocks',
+            ORDERS: 'tnpds_live_orders',
+            QUEUE: 'tnpds_live_queue',
+            SHOP: 'tnpds_live_shop',
+            PREFS: 'tnpds_live_prefs',
+            USER_SESSION: 'tnpds_live_user_session',
+            ADMIN_SESSION: 'tnpds_live_admin_session'
+        };
+
+        // In-Memory Reactive App State
+        let STATE = {
+            beneficiaries: [],
+            stocks: [],
+            orders: [],
+            queue: [],
+            shop: {
+                shop_code: AUTHORIZED_SHOP_CODE,
+                shop_name: 'FPS #TN07CS8014',
+                shop_status: 'OPEN',
+                current_serving: 100,
+                service_pace: 4,
+                max_tokens: 50
+            },
+            cart: {}, // { stockId: quantity }
+            qtyPickers: {}, // { stockId: chosenQty }
+            selectedSlot: 'Morning (8:00 - 11:00 AM)',
+            prefs: { lang: 'en', largeFont: false, highContrast: false }
+        };
+
+        const DEFAULT_STOCKS = [
+            { id: 's1', en: 'Boiled Rice', ta: 'புழுங்கல் அரிசி', hi: 'उबला चावल', te: 'ఉప్పుడు బియ్యం', ml: 'പുഴുക്കലരി', kn: 'ಕುಚಲಕ್ಕಿ', ar: 'أرز مسلوق', image_type: 'boiled_rice', image_url: '', qty: 520, unit: 'kg', price: 0, quota: 20 },
+            { id: 's2', en: 'Raw Rice', ta: 'பச்சரிசி', hi: 'कच्चा चावल', te: 'పచ్చి బియ్యం', ml: 'പച്ചരി', kn: 'ಅಕ್ಕಿ', ar: 'أرز خام', image_type: 'raw_rice', image_url: '', qty: 240, unit: 'kg', price: 0, quota: 10 },
+            { id: 's3', en: 'Sugar', ta: 'சர்க்கரை', hi: 'चीनी', te: 'చక్కెర', ml: 'പഞ്ചസാര', kn: 'ಸಕ್ಕರೆ', ar: 'سكر', image_type: 'sugar', image_url: '', qty: 110, unit: 'kg', price: 13.50, quota: 2 },
+            { id: 's4', en: 'Toor Dal', ta: 'துவரம் பருப்பு', hi: 'तूर दाल', te: 'కందిపప్పు', ml: 'തുവര പരിപ്പ്', kn: 'ತೊಗರಿ ಬೇಳೆ', ar: 'عدس تور', image_type: 'toor_dal', image_url: '', qty: 40, unit: 'kg', price: 30, quota: 1 },
+            { id: 's5', en: 'Palmolein Oil', ta: 'பாமாயில்', hi: 'पामोलिन तेल', te: 'పామాయిల్', ml: 'പാമോയിൽ', kn: 'ಪಾಮ್ ಆಯಿಲ್', ar: 'زيت النخيل', image_type: 'oil', image_url: '', qty: 75, unit: 'Packets', price: 25, quota: 1 },
+            { id: 's6', en: 'Wheat', ta: 'கோதுமை', hi: 'गेहूं', te: 'గోధుమలు', ml: 'ഗോതമ്പ്', kn: 'ಗೋಧಿ', ar: 'قمح', image_type: 'wheat', image_url: '', qty: 160, unit: 'kg', price: 0, quota: 5 },
+            { id: 's7', en: 'Ragi (Finger Millet)', ta: 'கேழ்வரகு', hi: 'रागी', te: 'రాగులు', ml: 'റാഗി', kn: 'ರಾಗಿ', ar: 'دخن الراغي', image_type: 'ragi', image_url: '', qty: 80, unit: 'kg', price: 0, quota: 2 }
+        ];
+
+        // =====================================================================
+        // 2. 7-LANGUAGE DICTIONARY (EN, TA, HI, TE, ML, KN, AR)
+        // =====================================================================
+        const TRANSLATIONS = {
+            en: {
+                appTitle: 'Tamil Nadu Smart Ration & Queue System',
+                userPortalBtn: 'Beneficiary Portal',
+                adminPortalBtn: 'FPS Dealer Admin',
+                loginHeading: 'Beneficiary Secure Access',
+                loginSub: 'Unique Ration Card & Password Protected',
+                tabSignIn: 'Sign In',
+                tabRegister: 'New Registration',
+                lblRationNo: 'Smart Ration Card Number',
+                lblPassword: 'Beneficiary Password',
+                lblCardHolder: 'Family Head Full Name',
+                lblMobile: '10-Digit Mobile Number',
+                lblCreatePass: 'Create Password',
+                lblConfirmPass: 'Confirm Password',
+                btnSignIn: 'Sign In to Ration Portal',
+                btnCreateAccount: 'Create Unique Account & Enter',
+                lblFamilyHead: 'Family Head',
+                navStocks: 'Order Stocks & Cart',
+                navQueue: 'Queue Token & QR',
+                navHistory: 'My Buying History',
+                navSettings: 'Settings & Language',
+                btnLogout: 'Sign Out',
+                stockHeading: 'Live FPS Stock & Interactive Ration Cart',
+                stockSub: 'Choose commodities and quantities within your quota — stock syncs live with FPS Admin',
+                btnViewCart: 'View Cart',
+                addToCart: 'Add to Cart',
+                inCart: 'Update Cart',
+                outOfStock: 'OUT OF STOCK',
+                inStock: 'IN STOCK',
+                lowStock: 'LOW STOCK',
+                quotaLeft: 'Quota Left',
+                shopStock: 'Live Shop Stock',
+                freeLabel: 'FREE',
+                cartTitle: 'Your Ration Cart',
+                cartTotal: 'Total Payable',
+                btnPlaceOrder: 'Confirm Order & Update Live Stock',
+                kpiServing: 'Now Serving',
+                kpiYourToken: 'Your Token',
+                kpiAhead: 'Ahead of You',
+                kpiWait: 'Est. Wait Time',
+                fastBookTitle: '1-Tap Instant Queue Token Booking',
+                fastBookSub: 'Pick a convenient time window and generate your QR pass in 1 click',
+                btnBookNow: 'Book Instant Token (1-Tap)',
+                activePassTitle: 'Live Queue Radar & Digital QR Pass',
+                lblQueueStatus: 'Live Queue Position',
+                btnPrintPass: 'Print Pass',
+                btnCancelToken: 'Cancel Token',
+                historyHeading: 'My Verified Buying History & e-Receipts',
+                historySub: 'Live record uniquely tied to your Smart Ration Card Number',
+                settingsHeading: 'Language & Accessibility Preferences',
+                setLangTitle: 'Choose Application Language',
+                setLargeText: 'Large Text (Elder-Friendly)',
+                setHighContrast: 'High-Contrast Mode'
+            },
+            ta: {
+                appTitle: 'தமிழ்நாடு ஸ்மார்ட் ரேஷன் & வரிசை மேலாண்மை',
+                userPortalBtn: 'பயனாளர் தளம்',
+                adminPortalBtn: 'விற்பனையாளர் நிர்வாகம்',
+                loginHeading: 'பயனாளர் பாதுகாப்பான உள்நுழைவு',
+                loginSub: 'தனிப்பட்ட ரேஷன் அட்டை & கடவுச்சொல் பாதுகாப்பு',
+                tabSignIn: 'உள்நுழைவு',
+                tabRegister: 'புதிய பதிவு',
+                lblRationNo: 'ஸ்மார்ட் ரேஷன் அட்டை எண்',
+                lblPassword: 'கடவுச்சொல் (Password)',
+                lblCardHolder: 'குடும்பத் தலைவர் பெயர்',
+                lblMobile: '10-இலக்க கைபேசி எண்',
+                lblCreatePass: 'கடவுச்சொல் உருவாக்கு',
+                lblConfirmPass: 'கடவுச்சொல் உறுதிப்படுத்து',
+                btnSignIn: 'உள்நுழையவும்',
+                btnCreateAccount: 'கணக்கு உருவாக்கி நுழையவும்',
+                lblFamilyHead: 'குடும்பத் தலைவர்',
+                navStocks: 'பொருட்கள் & கூடை (Cart)',
+                navQueue: 'வரிசை டோக்கன் & QR',
+                navHistory: 'கொள்முதல் வரலாறு',
+                navSettings: 'அமைப்புகள் & மொழி',
+                btnLogout: 'வெளியேறு',
+                stockHeading: 'நேரடி கடை இருப்பு & பொருட்கள் தேர்வு',
+                stockSub: 'தேவையான பொருட்கள் மற்றும் அளவைத் தேர்ந்தெடுத்து ஆர்டர் செய்யவும்',
+                btnViewCart: 'கூடையைப் பார்',
+                addToCart: 'கூடையில் சேர்',
+                inCart: 'கூடையை மாற்று',
+                outOfStock: 'இருப்பு இல்லை',
+                inStock: 'இருப்பு உள்ளது',
+                lowStock: 'குறைந்த இருப்பு',
+                quotaLeft: 'மீதமுள்ள ஒதுக்கீடு',
+                shopStock: 'கடை இருப்பு',
+                freeLabel: 'இலவசம்',
+                cartTitle: 'உங்கள் ரேஷன் கூடை',
+                cartTotal: 'மொத்த தொகை',
+                btnPlaceOrder: 'ஆர்டரை உறுதி செய்',
+                kpiServing: 'தற்போதைய எண்',
+                kpiYourToken: 'உங்கள் டோக்கன்',
+                kpiAhead: 'உங்களுக்கு முன்',
+                kpiWait: 'காத்திருப்பு நேரம்',
+                fastBookTitle: '1-கிளிக் உடனடி டோக்கன் முன்பதிவு',
+                fastBookSub: 'நேரத்தைத் தேர்ந்தெடுத்து QR டோக்கனைப் பெறுங்கள்',
+                btnBookNow: 'உடனடி டோக்கன் பெறுக',
+                activePassTitle: 'நேரடி வரிசை & டிஜிட்டல் QR சீட்டு',
+                lblQueueStatus: 'தற்போதைய வரிசை நிலை',
+                btnPrintPass: 'அச்சிடு',
+                btnCancelToken: 'ரத்து செய்',
+                historyHeading: 'எனது கொள்முதல் வரலாறு & ரசீதுகள்',
+                historySub: 'உங்கள் ரேஷன் அட்டைக்கான நேரடி கொள்முதல் விவரங்கள்',
+                settingsHeading: 'மொழி & அணுகல்தன்மை அமைப்புகள்',
+                setLangTitle: 'செயலி மொழியைத் தேர்ந்தெடுக்கவும்',
+                setLargeText: 'பெரிய எழுத்துக்கள்',
+                setHighContrast: 'உயர் மாறுபாடு காட்சி'
+            },
+            hi: {
+                appTitle: 'तमिलनाडु स्मार्ट राशन और कतार प्रणाली',
+                userPortalBtn: 'लाभार्थी पोर्टल',
+                adminPortalBtn: 'एफपीएस डीलर एडमिन',
+                loginHeading: 'लाभार्थी सुरक्षित लॉगिन',
+                loginSub: 'यूनिक राशन कार्ड और पासवर्ड द्वारा सुरक्षित',
+                tabSignIn: 'साइन इन',
+                tabRegister: 'नया पंजीकरण',
+                lblRationNo: 'स्मार्ट राशन कार्ड नंबर',
+                lblPassword: 'पासवर्ड',
+                lblCardHolder: 'परिवार के मुखिया का नाम',
+                lblMobile: '10-अंकीय मोबाइल नंबर',
+                lblCreatePass: 'पासवर्ड बनाएं',
+                lblConfirmPass: 'पासवर्ड की पुष्टि करें',
+                btnSignIn: 'राशन पोर्टल में प्रवेश करें',
+                btnCreateAccount: 'खाता बनाएं और प्रवेश करें',
+                lblFamilyHead: 'परिवार के मुखिया',
+                navStocks: 'स्टॉक और कार्ट',
+                navQueue: 'कतार टोकन और QR',
+                navHistory: 'खरीदारी का इतिहास',
+                navSettings: 'सेटिंग्स और भाषा',
+                btnLogout: 'लॉग आउट',
+                stockHeading: 'लाइव दुकान स्टॉक और राशन कार्ट',
+                stockSub: 'अपनी आवश्यकता अनुसार वस्तुएं और मात्रा चुनें — लाइव स्टॉक अपडेट',
+                btnViewCart: 'कार्ट देखें',
+                addToCart: 'कार्ट में जोड़ें',
+                inCart: 'कार्ट अपडेट करें',
+                outOfStock: 'स्टॉक समाप्त',
+                inStock: 'उपलब्ध',
+                lowStock: 'कम स्टॉक',
+                quotaLeft: 'शेष कोटा',
+                shopStock: 'दुकान में स्टॉक',
+                freeLabel: 'मुफ़्त',
+                cartTitle: 'आपका राशन कार्ट',
+                cartTotal: 'कुल देय राशि',
+                btnPlaceOrder: 'ऑर्डर कन्फर्म करें',
+                kpiServing: 'वर्तमान टोकन',
+                kpiYourToken: 'आपका टोकन',
+                kpiAhead: 'आपसे आगे',
+                kpiWait: 'अनुमानित समय',
+                fastBookTitle: '1-टैप तत्काल कतार टोकन बुकिंग',
+                fastBookSub: 'अपना समय चुनें और तुरंत QR पास पाएं',
+                btnBookNow: 'तुरंत टोकन बुक करें',
+                activePassTitle: 'लाइव कतार और डिजिटल QR पास',
+                lblQueueStatus: 'लाइव कतार स्थिति',
+                btnPrintPass: 'पास प्रिंट करें',
+                btnCancelToken: 'टोकन रद्द करें',
+                historyHeading: 'मेरा खरीदारी इतिहास और रसीदें',
+                historySub: 'आपके राशन कार्ड से जुड़ा वास्तविक रिकॉर्ड',
+                settingsHeading: 'भाषा और एक्सेसिबिलिटी सेटिंग्स',
+                setLangTitle: 'ऐप की भाषा चुनें',
+                setLargeText: 'बड़ा टेक्स्ट (वरिष्ठ नागरिकों के लिए)',
+                setHighContrast: 'हाई-कंट्रास्ट मोड'
+            },
+            te: {
+                appTitle: 'తమిళనాడు స్మార్ట్ రేషన్ & క్యూ సిస్టమ్',
+                userPortalBtn: 'లబ్ధిదారు పోర్టల్',
+                adminPortalBtn: 'డీలర్ అడ్మిన్',
+                loginHeading: 'లబ్ధిదారు సురక్షిత లాగిన్',
+                loginSub: 'ప్రత్యేక రేషన్ కార్డ్ & పాస్‌వర్డ్ రక్షణ',
+                tabSignIn: 'సైన్ ఇన్',
+                tabRegister: 'కొత్త నమోదు',
+                lblRationNo: 'స్మార్ట్ రేషన్ కార్డ్ నంబర్',
+                lblPassword: 'పాస్‌వర్డ్',
+                lblCardHolder: 'కుటుంబ పెద్ద పేరు',
+                lblMobile: '10 అంకెల మొబైల్ నంబర్',
+                lblCreatePass: 'పాస్‌వర్డ్ సృష్టించండి',
+                lblConfirmPass: 'పాస్‌వర్డ్ నిర్ధారించండి',
+                btnSignIn: 'రేషన్ పోర్టల్‌లోకి ప్రవేశించండి',
+                btnCreateAccount: 'ఖాతా సృష్టించి ప్రవేశించండి',
+                lblFamilyHead: 'కుటుంబ పెద్ద',
+                navStocks: 'సరుకులు & కార్ట్',
+                navQueue: 'క్యూ టోకెన్ & QR',
+                navHistory: 'కొనుగోలు చరిత్ర',
+                navSettings: 'సెట్టింగులు & భాష',
+                btnLogout: 'లాగ్ అవుట్',
+                stockHeading: 'లైవ్ షాప్ స్టాక్ & రేషన్ కార్ట్',
+                stockSub: 'మీ కోటా ప్రకారం సరుకులు మరియు పరిమాణాన్ని ఎంచుకోండి',
+                btnViewCart: 'కార్ట్ చూడండి',
+                addToCart: 'కార్ట్‌లో చేర్చు',
+                inCart: 'కార్ట్ అప్‌డేట్',
+                outOfStock: 'స్టాక్ లేదు',
+                inStock: 'అందుబాటులో ఉంది',
+                lowStock: 'తక్కువ స్టాక్',
+                quotaLeft: 'మిగిలిన కోటా',
+                shopStock: 'షాప్ స్టాక్',
+                freeLabel: 'ఉచితం',
+                cartTitle: 'మీ రేషన్ కార్ట్',
+                cartTotal: 'మొత్తం చెల్లించాల్సినది',
+                btnPlaceOrder: 'ఆర్డర్ నిర్ధారించండి',
+                kpiServing: 'ప్రస్తుత టోకెన్',
+                kpiYourToken: 'మీ టోకెన్',
+                kpiAhead: 'మీ ముందు ఉన్నవారు',
+                kpiWait: 'వేచి ఉండే సమయం',
+                fastBookTitle: '1-ట్యాప్ తక్షణ టోకెన్ బుకింగ్',
+                fastBookSub: 'సమయాన్ని ఎంచుకుని QR పాస్ పొందండి',
+                btnBookNow: 'టోకెన్ బుక్ చేయండి',
+                activePassTitle: 'లైవ్ క్యూ & డిజిటల్ QR పాస్',
+                lblQueueStatus: 'ప్రస్తుత క్యూ స్థితి',
+                btnPrintPass: 'ప్రింట్ చేయండి',
+                btnCancelToken: 'రద్దు చేయండి',
+                historyHeading: 'నా కొనుగోలు చరిత్ర & రసీదులు',
+                historySub: 'మీ రేషన్ కార్డ్ నంబర్‌కు చెందిన రికార్డులు',
+                settingsHeading: 'భాష & సెట్టింగులు',
+                setLangTitle: 'యాప్ భాషను ఎంచుకోండి',
+                setLargeText: 'పెద్ద అక్షరాలు',
+                setHighContrast: 'హై-కాంట్రాస్ట్ మోడ్'
+            },
+            ml: {
+                appTitle: 'തമിഴ്നാട് സ്മാർട്ട് റേഷൻ & ക്യൂ സിസ്റ്റം',
+                userPortalBtn: 'ഉപഭോക്തൃ പോർട്ടൽ',
+                adminPortalBtn: 'ഡീലർ അഡ്മിൻ',
+                loginHeading: 'സുരക്ഷിത ലോഗിൻ',
+                loginSub: 'തനത് റേഷൻ കാർഡും പാസ്‌വേഡും',
+                tabSignIn: 'സൈൻ ഇൻ',
+                tabRegister: 'പുതിയ രജിസ്ട്രേഷൻ',
+                lblRationNo: 'സ്മാർട്ട് റേഷൻ കാർഡ് നമ്പർ',
+                lblPassword: 'പാസ്‌വേഡ്',
+                lblCardHolder: 'കുടുംബനാഥന്റെ പേര്',
+                lblMobile: '10 അക്ക മൊബൈൽ നമ്പർ',
+                lblCreatePass: 'പാസ്‌വേഡ് നൽകുക',
+                lblConfirmPass: 'പാസ്‌വേഡ് സ്ഥിരീകരിക്കുക',
+                btnSignIn: 'പോർട്ടലിൽ പ്രവേശിക്കുക',
+                btnCreateAccount: 'അക്കൗണ്ട് ഉണ്ടാക്കി പ്രവേശിക്കുക',
+                lblFamilyHead: 'കുടുംബനാഥൻ',
+                navStocks: 'സ്റ്റോക്കും കാർട്ടും',
+                navQueue: 'ടോക്കൺ & QR',
+                navHistory: 'വാങ്ങൽ ചരിത്രം',
+                navSettings: 'ക്രമീകരണങ്ങളും ഭാഷയും',
+                btnLogout: 'സൈൻ ഔട്ട്',
+                stockHeading: 'തത്സമയ റേഷൻ സ്റ്റോക്കും കാർട്ടും',
+                stockSub: 'നിങ്ങളുടെ ക്വാട്ടയ്ക്കനുസരിച്ച് സാധനങ്ങളും അളവും തിരഞ്ഞെടുക്കുക',
+                btnViewCart: 'കാർട്ട് കാണുക',
+                addToCart: 'കാർട്ടിലേക്ക് ചേർക്കുക',
+                inCart: 'കാർട്ട് പുതുക്കുക',
+                outOfStock: 'സ്റ്റോക്കില്ല',
+                inStock: 'ലഭ്യമാണ്',
+                lowStock: 'കുറഞ്ഞ സ്റ്റോക്ക്',
+                quotaLeft: 'ബാക്കിയുള്ള ക്വാട്ട',
+                shopStock: 'കടയിലെ സ്റ്റോക്ക്',
+                freeLabel: 'സൗജന്യം',
+                cartTitle: 'നിങ്ങളുടെ റേഷൻ കാർട്ട്',
+                cartTotal: 'ആകെ തുക',
+                btnPlaceOrder: 'ഓർഡർ സ്ഥിരീകരിക്കുക',
+                kpiServing: 'ഇപ്പോൾ വിളിക്കുന്നത്',
+                kpiYourToken: 'നിങ്ങളുടെ ടോക്കൺ',
+                kpiAhead: 'മുന്നിലുള്ളവർ',
+                kpiWait: 'കാത്തിരിപ്പ് സമയം',
+                fastBookTitle: 'തൽക്ഷണ ക്യൂ ടോക്കൺ ബുക്കിംഗ്',
+                fastBookSub: 'സമയം തിരഞ്ഞെടുത്ത് QR പാസ് നേടുക',
+                btnBookNow: 'ടോക്കൺ ബുക്ക് ചെയ്യുക',
+                activePassTitle: 'ലൈവ് ക്യൂ & ഡിജിറ്റൽ QR പാസ്',
+                lblQueueStatus: 'ക്യൂ നില',
+                btnPrintPass: 'പ്രിന്റ് ചെയ്യുക',
+                btnCancelToken: 'റദ്ദാക്കുക',
+                historyHeading: 'എന്റെ വാങ്ങൽ ചരിത്രവും രസീതുകളും',
+                historySub: 'നിങ്ങളുടെ റേഷൻ കാർഡിലെ യഥാർത്ഥ വിവരങ്ങൾ',
+                settingsHeading: 'ഭാഷ & ക്രമീകരണങ്ങൾ',
+                setLangTitle: 'ഭാഷ തിരഞ്ഞെടുക്കുക',
+                setLargeText: 'വലിയ അക്ഷരങ്ങൾ',
+                setHighContrast: 'ഹൈ-കോൺട്രാസ്റ്റ് മോഡ്'
+            },
+            kn: {
+                appTitle: 'ತಮಿಳುನಾಡು ಸ್ಮಾರ್ಟ್ ರೇಷನ್ ಮತ್ತು ಕ್ಯೂ ವ್ಯವಸ್ಥೆ',
+                userPortalBtn: 'ಫಲಾನುಭವಿ ಪೋರ್ಟಲ್',
+                adminPortalBtn: 'ಡೀಲರ್ ಅಡ್ಮಿನ್',
+                loginHeading: 'ಫಲಾನುಭವಿ ಸುರಕ್ಷಿತ ಲಾಗಿನ್',
+                loginSub: 'ವಿಶಿಷ್ಟ ರೇಷನ್ ಕಾರ್ಡ್ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ರಕ್ಷಣೆ',
+                tabSignIn: 'ಸೈನ್ ಇನ್',
+                tabRegister: 'ಹೊಸ ನೋಂದಣಿ',
+                lblRationNo: 'ಸ್ಮಾರ್ಟ್ ರೇಷನ್ ಕಾರ್ಡ್ ಸಂಖ್ಯೆ',
+                lblPassword: 'ಪಾಸ್‌ವರ್ಡ್',
+                lblCardHolder: 'ಕುಟುಂಬದ ಮುಖ್ಯಸ್ಥರ ಹೆಸರು',
+                lblMobile: '10 ಅಂಕಿಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ',
+                lblCreatePass: 'ಪಾಸ್‌ವರ್ಡ್ ರಚಿಸಿ',
+                lblConfirmPass: 'ಪಾಸ್‌ವರ್ಡ್ ದೃಢೀಕರಿಸಿ',
+                btnSignIn: 'ಪೋರ್ಟಲ್ ಪ್ರವೇಶಿಸಿ',
+                btnCreateAccount: 'ಖಾತೆ ರಚಿಸಿ ಮತ್ತು ಪ್ರವೇಶಿಸಿ',
+                lblFamilyHead: 'ಕುಟುಂಬದ ಮುಖ್ಯಸ್ಥರು',
+                navStocks: 'ಸ್ಟಾಕ್ ಮತ್ತು ಕಾರ್ಟ್',
+                navQueue: 'ಟೋಕನ್ ಮತ್ತು QR',
+                navHistory: 'ಖರೀದಿ ಇತಿಹಾಸ',
+                navSettings: 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಮತ್ತು ಭಾಷೆ',
+                btnLogout: 'ಸೈನ್ ಔಟ್',
+                stockHeading: 'ಲೈವ್ ಅಂಗಡಿ ಸ್ಟಾಕ್ ಮತ್ತು ರೇಷನ್ ಕಾರ್ಟ್',
+                stockSub: 'ನಿಮ್ಮ ಕೋಟಾದ ಪ್ರಕಾರ ವಸ್ತುಗಳು ಮತ್ತು ಪ್ರಮಾಣವನ್ನು ಆಯ್ಕೆಮಾಡಿ',
+                btnViewCart: 'ಕಾರ್ಟ್ ನೋಡಿ',
+                addToCart: 'ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಿ',
+                inCart: 'ಕಾರ್ಟ್ ನವೀಕರಿಸಿ',
+                outOfStock: 'ಸ್ಟಾಕ್ ಇಲ್ಲ',
+                inStock: 'ಲಭ್ಯವಿದೆ',
+                lowStock: 'ಕಡಿಮೆ ಸ್ಟಾಕ್',
+                quotaLeft: 'ಉಳಿದ ಕೋಟಾ',
+                shopStock: 'ಅಂಗಡಿ ಸ್ಟಾಕ್',
+                freeLabel: 'ಉಚಿತ',
+                cartTitle: 'ನಿಮ್ಮ ರೇಷನ್ ಕಾರ್ಟ್',
+                cartTotal: 'ಒಟ್ಟು ಮೊತ್ತ',
+                btnPlaceOrder: 'ಆರ್ಡರ್ ದೃಢೀಕರಿಸಿ',
+                kpiServing: 'ಪ್ರಸ್ತುತ ಟೋಕನ್',
+                kpiYourToken: 'ನಿಮ್ಮ ಟೋಕನ್',
+                kpiAhead: 'ನಿಮ್ಮ ಮುಂದೆ',
+                kpiWait: 'ನಿರೀಕ್ಷಿತ ಸಮಯ',
+                fastBookTitle: 'ತ್ವರಿತ ಕ್ಯೂ ಟೋಕನ್ ಬುಕಿಂಗ್',
+                fastBookSub: 'ಸಮಯವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ QR ಪಾಸ್ ಪಡೆಯಿರಿ',
+                btnBookNow: 'ಟೋಕನ್ ಬುಕ್ ಮಾಡಿ',
+                activePassTitle: 'ಲೈವ್ ಕ್ಯೂ ಮತ್ತು ಡಿಜಿಟಲ್ QR ಪಾಸ್',
+                lblQueueStatus: 'ಪ್ರಸ್ತುತ ಕ್ಯೂ ಸ್ಥಿತಿ',
+                btnPrintPass: 'ಪ್ರಿಂಟ್ ಮಾಡಿ',
+                btnCancelToken: 'ರದ್ದುಮಾಡಿ',
+                historyHeading: 'ನನ್ನ ಖರೀದಿ ಇತಿಹಾಸ ಮತ್ತು ರಶೀದಿಗಳು',
+                historySub: 'ನಿಮ್ಮ ರೇಷನ್ ಕಾರ್ಡ್‌ಗೆ ಸಂಬಂಧಿಸಿದ ನೈಜ ದಾಖಲೆಗಳು',
+                settingsHeading: 'ಭಾಷೆ ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು',
+                setLangTitle: 'ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ',
+                setLargeText: 'ದೊಡ್ಡ ಅಕ್ಷರಗಳು',
+                setHighContrast: 'ಹೈ-ಕಾಂಟ್ರಾಸ್ಟ್ ಮೋಡ್'
+            },
+            ar: {
+                appTitle: 'نظام التموين الذكي وإدارة الطوابير',
+                userPortalBtn: 'بوابة المستفيد',
+                adminPortalBtn: 'إدارة الموزع',
+                loginHeading: 'تسجيل دخول المستفيد الآمن',
+                loginSub: 'محمي برقم بطاقة التموين الفريد وكلمة المرور',
+                tabSignIn: 'تسجيل الدخول',
+                tabRegister: 'تسجيل جديد',
+                lblRationNo: 'رقم بطاقة التموين الذكية',
+                lblPassword: 'كلمة المرور',
+                lblCardHolder: 'اسم رب الأسرة',
+                lblMobile: 'رقم الجوال (10 أرقام)',
+                lblCreatePass: 'إنشاء كلمة مرور',
+                lblConfirmPass: 'تأكيد كلمة المرور',
+                btnSignIn: 'الدخول إلى البوابة',
+                btnCreateAccount: 'إنشاء حساب فريد والدخول',
+                lblFamilyHead: 'رب الأسرة',
+                navStocks: 'المخزون والسلة',
+                navQueue: 'رقم الدور و QR',
+                navHistory: 'سجل المشتريات',
+                navSettings: 'الإعدادات واللغة',
+                btnLogout: 'تسجيل الخروج',
+                stockHeading: 'مخزون المتجر المباشر وسلة التموين',
+                stockSub: 'اختر السلع والكميات المطلوبة ضمن حصتك — تحديث مباشر للمخزون',
+                btnViewCart: 'عرض السلة',
+                addToCart: 'أضف إلى السلة',
+                inCart: 'تحديث السلة',
+                outOfStock: 'نفد المخزون',
+                inStock: 'متوفر',
+                lowStock: 'مخزون منخفض',
+                quotaLeft: 'الحصة المتبقية',
+                shopStock: 'المخزون المتاح',
+                freeLabel: 'مجاني',
+                cartTitle: 'سلة التموين الخاصة بك',
+                cartTotal: 'الإجمالي المستحق',
+                btnPlaceOrder: 'تأكيد الطلب وتحديث المخزون',
+                kpiServing: 'يُخدم الآن',
+                kpiYourToken: 'رقم دورك',
+                kpiAhead: 'أمامك في الدور',
+                kpiWait: 'الانتظار المتوقع',
+                fastBookTitle: 'حجز رقم دور فوري بنقرة واحدة',
+                fastBookSub: 'اختر الفترة الزمنية واحصل على بطاقة QR فوراً',
+                btnBookNow: 'احجز دورك الآن',
+                activePassTitle: 'حالة الدور المباشرة وبطاقة QR',
+                lblQueueStatus: 'موقعك المباشر في الطابور',
+                btnPrintPass: 'طباعة البطاقة',
+                btnCancelToken: 'إلغاء الدور',
+                historyHeading: 'سجل مشترياتي والإيصالات الرقمية',
+                historySub: 'سجل حقيقي مرتبط برقم بطاقة التموين الخاصة بك فقط',
+                settingsHeading: 'اللغة وإعدادات العرض',
+                setLangTitle: 'اختر لغة التطبيق',
+                setLargeText: 'خط كبير (مناسب لكبار السن)',
+                setHighContrast: 'وضع التباين العالي'
+            }
+        };
+
+        // =====================================================================
+        // 3. CUSTOM ILLUSTRATED COMMODITY ARTWORK (100% RELIABLE, NEVER BREAKS)
+        // =====================================================================
+        function getCommodityArtwork(item) {
+            if (item.image_url && item.image_url.trim().startsWith('http')) {
+                return `<img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.en)}" class="w-full h-36 object-cover" onerror="this.outerHTML=getBuiltinSvg('${item.image_type || 'default'}')">`;
+            }
+            return getBuiltinSvg(item.image_type || 'default');
+        }
+
+        function getBuiltinSvg(type) {
+            const templates = {
+                boiled_rice: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-br" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fef3c7"/><stop offset="100%" stop-color="#fde68a"/></linearGradient>
+                            <linearGradient id="bowl-br" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#92400e"/><stop offset="100%" stop-color="#451a03"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-br)"/>
+                        <circle cx="270" cy="30" r="55" fill="#f59e0b" opacity="0.15"/>
+                        <ellipse cx="160" cy="128" rx="76" ry="12" fill="#78350f" opacity="0.18"/>
+                        <path d="M98 78 Q160 22 222 78 Z" fill="#fffbeb" stroke="#fde68a" stroke-width="2"/>
+                        <g fill="#f59e0b" opacity="0.45">
+                            <ellipse cx="145" cy="58" rx="5" ry="2.2" transform="rotate(-20 145 58)"/>
+                            <ellipse cx="165" cy="52" rx="5" ry="2.2" transform="rotate(15 165 52)"/>
+                            <ellipse cx="182" cy="64" rx="5" ry="2.2" transform="rotate(-10 182 64)"/>
+                            <ellipse cx="132" cy="68" rx="5" ry="2.2" transform="rotate(25 132 68)"/>
+                            <ellipse cx="158" cy="67" rx="5" ry="2.2" transform="rotate(-5 158 67)"/>
+                        </g>
+                        <path d="M88 76 C88 118, 120 128, 160 128 C200 128, 232 118, 232 76 Z" fill="url(#bowl-br)"/>
+                        <ellipse cx="160" cy="76" rx="72" ry="10" fill="#b45309"/>
+                        <path d="M102 76 Q160 36 218 76 Q160 85 102 76 Z" fill="#fffdf5"/>
+                    </svg>`,
+                raw_rice: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-rr" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ecfdf5"/><stop offset="100%" stop-color="#a7f3d0"/></linearGradient>
+                            <linearGradient id="sack-rr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d6b48c"/><stop offset="100%" stop-color="#a67c52"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-rr)"/>
+                        <circle cx="55" cy="35" r="48" fill="#10b981" opacity="0.15"/>
+                        <ellipse cx="160" cy="130" rx="68" ry="11" fill="#064e3b" opacity="0.16"/>
+                        <path d="M110 58 C95 85, 95 125, 160 128 C225 125, 225 85, 210 58 Z" fill="url(#sack-rr)"/>
+                        <path d="M118 58 Q160 22 202 58 Q160 68 118 58 Z" fill="#ffffff"/>
+                        <rect x="122" y="64" width="76" height="8" rx="4" fill="#047857"/>
+                        <g fill="#e2e8f0">
+                            <ellipse cx="145" cy="48" rx="4.5" ry="2" transform="rotate(-18 145 48)"/>
+                            <ellipse cx="168" cy="44" rx="4.5" ry="2" transform="rotate(20 168 44)"/>
+                            <ellipse cx="156" cy="54" rx="4.5" ry="2" transform="rotate(-8 156 54)"/>
+                            <ellipse cx="180" cy="52" rx="4.5" ry="2" transform="rotate(14 180 52)"/>
+                        </g>
+                    </svg>`,
+                sugar: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#eff6ff"/><stop offset="100%" stop-color="#bfdbfe"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-sg)"/>
+                        <circle cx="265" cy="115" r="55" fill="#3b82f6" opacity="0.12"/>
+                        <ellipse cx="160" cy="128" rx="70" ry="10" fill="#1e3a8a" opacity="0.15"/>
+                        <path d="M98 76 C98 116, 125 126, 160 126 C195 126, 222 116, 222 76 Z" fill="#1d4ed8"/>
+                        <path d="M106 76 Q160 28 214 76 Q160 86 106 76 Z" fill="#ffffff"/>
+                        <g fill="#93c5fd">
+                            <rect x="148" y="48" width="6" height="6" rx="1" transform="rotate(15 151 51)"/>
+                            <rect x="166" y="54" width="5" height="5" rx="1" transform="rotate(-20 168 56)"/>
+                            <rect x="135" y="60" width="5" height="5" rx="1" transform="rotate(25 137 62)"/>
+                            <rect x="178" y="62" width="6" height="6" rx="1" transform="rotate(10 181 65)"/>
+                        </g>
+                        <path d="M196 64 L240 34" stroke="#64748b" stroke-width="6" stroke-linecap="round"/>
+                        <ellipse cx="192" cy="66" rx="14" ry="7" fill="#cbd5e1" transform="rotate(-28 192 66)"/>
+                    </svg>`,
+                toor_dal: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-td" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff7ed"/><stop offset="100%" stop-color="#fed7aa"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-td)"/>
+                        <ellipse cx="160" cy="128" rx="74" ry="11" fill="#9a3412" opacity="0.16"/>
+                        <path d="M92 78 C92 118, 122 128, 160 128 C198 128, 228 118, 228 78 Z" fill="#0f766e"/>
+                        <path d="M102 78 Q160 26 218 78 Q160 88 102 78 Z" fill="#f59e0b"/>
+                        <g fill="#fde047">
+                            <circle cx="140" cy="60" r="4"/><circle cx="155" cy="50" r="4"/><circle cx="170" cy="56" r="4"/>
+                            <circle cx="185" cy="65" r="4"/><circle cx="128" cy="68" r="4"/><circle cx="160" cy="66" r="4.5"/>
+                            <circle cx="148" cy="70" r="3.5"/><circle cx="175" cy="70" r="3.5"/>
+                        </g>
+                    </svg>`,
+                oil: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-ol" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fefce8"/><stop offset="100%" stop-color="#fef08a"/></linearGradient>
+                            <linearGradient id="pouch-ol" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-ol)"/>
+                        <ellipse cx="160" cy="132" rx="54" ry="9" fill="#854d0e" opacity="0.18"/>
+                        <rect x="118" y="24" width="84" height="104" rx="14" fill="url(#pouch-ol)" stroke="#b45309" stroke-width="2"/>
+                        <rect x="130" y="42" width="60" height="58" rx="8" fill="#fffbeb"/>
+                        <path d="M160 52 C160 52, 174 70, 174 79 C174 87, 168 92, 160 92 C152 92, 146 87, 146 79 C146 70, 160 52, 160 52 Z" fill="#f59e0b"/>
+                        <path d="M155 76 C155 81, 158 84, 161 85" stroke="#fef3c7" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                    </svg>`,
+                wheat: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-wh" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fef9c3"/><stop offset="100%" stop-color="#fcd34d"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-wh)"/>
+                        <ellipse cx="160" cy="130" rx="70" ry="10" fill="#78350f" opacity="0.15"/>
+                        <g stroke="#b45309" stroke-width="3" stroke-linecap="round" fill="#d97706">
+                            <path d="M160 122 L160 32" fill="none"/>
+                            <ellipse cx="151" cy="48" rx="6" ry="11" transform="rotate(-25 151 48)"/>
+                            <ellipse cx="169" cy="48" rx="6" ry="11" transform="rotate(25 169 48)"/>
+                            <ellipse cx="149" cy="68" rx="6" ry="11" transform="rotate(-28 149 68)"/>
+                            <ellipse cx="171" cy="68" rx="6" ry="11" transform="rotate(28 171 68)"/>
+                            <ellipse cx="150" cy="88" rx="6" ry="11" transform="rotate(-25 150 88)"/>
+                            <ellipse cx="170" cy="88" rx="6" ry="11" transform="rotate(25 170 88)"/>
+                        </g>
+                        <path d="M118 118 Q160 88 202 118" fill="none" stroke="#92400e" stroke-width="4" stroke-linecap="round"/>
+                    </svg>`,
+                ragi: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fdf2f8"/><stop offset="100%" stop-color="#fbcfe8"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-rg)"/>
+                        <ellipse cx="160" cy="128" rx="72" ry="10" fill="#831843" opacity="0.16"/>
+                        <path d="M96 76 C96 116, 124 126, 160 126 C196 126, 224 116, 224 76 Z" fill="#4c1d95"/>
+                        <path d="M104 76 Q160 30 216 76 Q160 86 104 76 Z" fill="#881337"/>
+                        <g fill="#be123c">
+                            <circle cx="142" cy="58" r="3.5"/><circle cx="158" cy="52" r="3.5"/><circle cx="174" cy="58" r="3.5"/>
+                            <circle cx="132" cy="68" r="3.5"/><circle cx="152" cy="66" r="3.5"/><circle cx="168" cy="68" r="3.5"/><circle cx="186" cy="68" r="3.5"/>
+                        </g>
+                    </svg>`,
+                default: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-df" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f0fdf4"/><stop offset="100%" stop-color="#bbf7d0"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-df)"/>
+                        <rect x="115" y="42" width="90" height="78" rx="14" fill="#047857"/>
+                        <path d="M135 42 C135 22, 185 22, 185 42" fill="none" stroke="#065f46" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="160" cy="80" r="18" fill="#fbbf24"/>
+                        <path d="M152 80 L158 86 L170 73" fill="none" stroke="#064e3b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`
+            };
+            return templates[type] || templates.default;
+        }
+
+        // =====================================================================
+        // 4. UTILITIES (PASSWORD HASHING, TOASTS, AUDIO CHIME, ESCAPING)
+        // =====================================================================
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+        }
+
+        async function hashPassword(password) {
+            const salted = 'TNPDS_SALT_TN07CS8014_' + password;
+            if (window.crypto && window.crypto.subtle) {
+                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(salted));
+                return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+            // Fallback hash if opened directly via file://
+            let h = 2166136261;
+            for (let i = 0; i < salted.length; i++) {
+                h ^= salted.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
+            return 'h_' + (h >>> 0).toString(16);
+        }
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            const styles = {
+                success: 'bg-tnEmerald-950 border-tnGold-400 text-white',
+                warn: 'bg-amber-600 border-white text-white',
+                error: 'bg-rose-700 border-white text-white'
+            };
+            el.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl border-l-4 ${styles[type] || styles.success} text-xs sm:text-sm font-semibold animate-slide-up`;
+            el.innerHTML = `<i data-lucide="bell" class="w-4 h-4 text-tnGold-300 shrink-0"></i><span>${escapeHtml(msg)}</span>`;
+            container.appendChild(el);
+            lucide.createIcons();
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-6px)';
+                el.style.transition = 'all 0.25s ease';
+                setTimeout(() => el.remove(), 250);
+            }, 3400);
+        }
+
+        function playChime() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.14);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            } catch (e) {}
+        }
+
+        function formatDateTime(iso) {
+            if (!iso) return '—';
+            return new Date(iso).toLocaleString('en-IN', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        // =====================================================================
+        // 5. UNIFIED DATA LAYER (SUPABASE CLOUD + REALTIME + LOCAL FALLBACK)
+        // =====================================================================
+        function readLocal(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) {
+                    localStorage.setItem(key, JSON.stringify(fallback));
+                    return JSON.parse(JSON.stringify(fallback));
+                }
+                return JSON.parse(raw);
+            } catch {
+                return JSON.parse(JSON.stringify(fallback));
+            }
+        }
+        function writeLocal(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        async function loadAllData() {
+            const syncPill = document.getElementById('sync-status-pill');
+
+            if (isCloudConfigured && supabaseClient) {
+                try {
+                    const [bRes, sRes, oRes, qRes, stRes] = await Promise.all([
+                        supabaseClient.from('beneficiaries').select('*').order('last_login', { ascending: false }),
+                        supabaseClient.from('stocks').select('*').order('id', { ascending: true }),
+                        supabaseClient.from('orders').select('*').order('created_at', { ascending: false }),
+                        supabaseClient.from('queue_tokens').select('*').order('token', { ascending: true }),
+                        supabaseClient.from('shop_state').select('*').eq('shop_code', AUTHORIZED_SHOP_CODE).maybeSingle()
+                    ]);
+
+                    if (bRes.error) throw bRes.error;
+                    STATE.beneficiaries = bRes.data || [];
+                    STATE.stocks = (sRes.data && sRes.data.length) ? sRes.data : DEFAULT_STOCKS;
+                    STATE.orders = oRes.data || [];
+                    STATE.queue = qRes.data || [];
+                    if (stRes.data) STATE.shop = stRes.data;
+
+                    syncPill.textContent = '● Cloud Live Sync';
+                    syncPill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-200 border border-emerald-400/40';
+                } catch (err) {
+                    console.error('Supabase sync error:', err);
+                    loadFromLocalStorage();
+                    syncPill.textContent = '● Local Mode (Check SQL/Keys)';
+                    syncPill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30';
+                }
+            } else {
+                loadFromLocalStorage();
+                syncPill.textContent = '● Local Mode (Add Supabase Keys)';
+                syncPill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30';
+            }
+
+            STATE.prefs = readLocal(LKEYS.PREFS, { lang: 'en', largeFont: false, highContrast: false });
+            applyLanguageAndPrefs();
+            renderAllViews();
+        }
+
+        function loadFromLocalStorage() {
+            STATE.beneficiaries = readLocal(LKEYS.BENEFICIARIES, []);
+            STATE.stocks = readLocal(LKEYS.STOCKS, DEFAULT_STOCKS);
+            STATE.orders = readLocal(LKEYS.ORDERS, []);
+            STATE.queue = readLocal(LKEYS.QUEUE, []);
+            STATE.shop = readLocal(LKEYS.SHOP, STATE.shop);
+        }
+
+        function setupRealtimeSubscriptions() {
+            if (isCloudConfigured && supabaseClient) {
+                supabaseClient
+                    .channel('tnpds-live-channel')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'stocks' }, async () => {
+                        const { data } = await supabaseClient.from('stocks').select('*').order('id', { ascending: true });
+                        if (data) STATE.stocks = data;
+                        renderAllViews();
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'beneficiaries' }, async (payload) => {
+                        const { data } = await supabaseClient.from('beneficiaries').select('*').order('last_login', { ascending: false });
+                        if (data) STATE.beneficiaries = data;
+                        if (isAdminLoggedIn() && payload.new && payload.new.name) {
+                            showToast(`Beneficiary activity: ${payload.new.name} (${payload.new.ration_card})`);
+                            playChime();
+                        }
+                        renderAllViews();
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
+                        const { data } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+                        if (data) STATE.orders = data;
+                        if (isAdminLoggedIn() && payload.eventType === 'INSERT' && payload.new) {
+                            showToast(`New Order #${payload.new.id} by ${payload.new.beneficiary_name} — ₹${Number(payload.new.total_amount).toFixed(2)}`);
+                            playChime();
+                        }
+                        renderAllViews();
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_tokens' }, async () => {
+                        const { data } = await supabaseClient.from('queue_tokens').select('*').order('token', { ascending: true });
+                        if (data) STATE.queue = data;
+                        renderAllViews();
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'shop_state' }, async () => {
+                        const { data } = await supabaseClient.from('shop_state').select('*').eq('shop_code', AUTHORIZED_SHOP_CODE).maybeSingle();
+                        if (data) STATE.shop = data;
+                        renderAllViews();
+                    })
+                    .subscribe();
+            }
+
+            // Cross-tab instant sync for local mode
+            window.addEventListener('storage', () => {
+                if (!isCloudConfigured) {
+                    loadFromLocalStorage();
+                    renderAllViews();
+                }
+            });
+        }
+
+        // Database Write Helpers
+        async function dbUpsertBeneficiary(record) {
+            if (isCloudConfigured && supabaseClient) {
+                const { error } = await supabaseClient.from('beneficiaries').upsert(record, { onConflict: 'ration_card' });
+                if (error) throw error;
+            }
+            const idx = STATE.beneficiaries.findIndex(b => b.ration_card === record.ration_card);
+            if (idx >= 0) STATE.beneficiaries[idx] = { ...STATE.beneficiaries[idx], ...record };
+            else STATE.beneficiaries.unshift(record);
+            writeLocal(LKEYS.BENEFICIARIES, STATE.beneficiaries);
+        }
+
+        async function dbUpdateStockQty(stockId, newQty) {
+            const safeQty = Math.max(0, Number(newQty) || 0);
+            if (isCloudConfigured && supabaseClient) {
+                const { error } = await supabaseClient.from('stocks').update({ qty: safeQty }).eq('id', stockId);
+                if (error) throw error;
+            }
+            const item = STATE.stocks.find(s => s.id === stockId);
+            if (item) item.qty = safeQty;
+            writeLocal(LKEYS.STOCKS, STATE.stocks);
+        }
+
+        async function dbInsertStock(stockObj) {
+            if (isCloudConfigured && supabaseClient) {
+                const { error } = await supabaseClient.from('stocks').insert(stockObj);
+                if (error) throw error;
+            }
+            STATE.stocks.push(stockObj);
+            writeLocal(LKEYS.STOCKS, STATE.stocks);
+        }
+
+        async function dbDeleteStock(stockId) {
+            if (isCloudConfigured && supabaseClient) {
+                const { error } = await supabaseClient.from('stocks').delete().eq('id', stockId);
+                if (error) throw error;
+            }
+            STATE.stocks = STATE.stocks.filter(s => s.id !== stockId);
+            writeLocal(LKEYS.STOCKS, STATE.stocks);
+        }
+
+        async function dbInsertOrder(orderObj) {
+            if (isCloudConfigured && supabaseClient) {
+                const { error } = await supabaseClient.from('orders').insert(orderObj);
+                if (error) throw error;
+            }
+            STATE.orders.unshift(orderObj);
+            writeLocal(LKEYS.ORDERS, STATE.orders);
+        }
+
+        async function dbUpsertQueueToken(tokObj) {
+            if (isCloudConfigured && supabaseClient) {
+                const { error } = await supabaseClient.from('queue_tokens').upsert(tokObj, { onConflict: 'token' });
+                if (error) throw error;
+            }
+            const idx = STATE.queue.findIndex(t => t.token === tokObj.token);
+            if (idx >= 0) STATE.queue[idx] = tokObj;
+            else STATE.queue.push(tokObj);
+            writeLocal(LKEYS.QUEUE, STATE.queue);
+        }
+
+        async function dbDeleteQueueToken(tokenNum) {
+            if (isCloudConfigured && supabaseClient) {
+                await supabaseClient.from('queue_tokens').delete().eq('token', tokenNum);
+            }
+            STATE.queue = STATE.queue.filter(t => t.token !== tokenNum);
+            writeLocal(LKEYS.QUEUE, STATE.queue);
+        }
+
+        async function dbSaveShopState() {
+            if (isCloudConfigured && supabaseClient) {
+                await supabaseClient.from('shop_state').upsert(STATE.shop, { onConflict: 'shop_code' });
+            }
+            writeLocal(LKEYS.SHOP, STATE.shop);
+        }
+
+        // =====================================================================
+        // 6. LANGUAGE & ACCESSIBILITY ENGINE
+        // =====================================================================
+        function t(key) {
+            const lang = STATE.prefs.lang || 'en';
+            return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
+        }
+
+        function getStockLabel(item) {
+            const lang = STATE.prefs.lang || 'en';
+            return item[lang] && item[lang].trim() ? item[lang] : item.en;
+        }
+
+        function applyLanguageAndPrefs() {
+            const lang = STATE.prefs.lang || 'en';
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+            const headerSel = document.getElementById('header-lang-select');
+            if (headerSel) headerSel.value = lang;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+
+            document.querySelectorAll('.lang-card').forEach(btn => {
+                const active = btn.dataset.lang === lang;
+                btn.className = active
+                    ? 'lang-card px-3 py-2.5 rounded-xl border-2 border-tnEmerald-700 bg-tnEmerald-700 text-white text-xs font-extrabold shadow transition'
+                    : 'lang-card px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:border-tnEmerald-400 text-slate-700 text-xs font-extrabold transition';
+            });
+
+            document.documentElement.classList.toggle('font-large', !!STATE.prefs.largeFont);
+            document.body.classList.toggle('high-contrast', !!STATE.prefs.highContrast);
+
+            const lf = document.getElementById('toggle-large-font');
+            const hc = document.getElementById('toggle-high-contrast');
+            if (lf) lf.checked = !!STATE.prefs.largeFont;
+            if (hc) hc.checked = !!STATE.prefs.highContrast;
+
+            const statusBadge = document.getElementById('header-shop-status');
+            const st = STATE.shop.shop_status || 'OPEN';
+            if (st === 'OPEN') {
+                statusBadge.textContent = '● OPEN';
+                statusBadge.className = 'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
+            } else if (st === 'LUNCH') {
+                statusBadge.textContent = '◐ LUNCH';
+                statusBadge.className = 'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20
