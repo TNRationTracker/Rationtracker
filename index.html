@@ -2051,23 +2051,23 @@
                     subtotal
                 });
             }
-
+            
             try {
-                for (const oi of orderItems) {
-                    const st = STATE.stocks.find(s => s.id === oi.id);
-                    await dbUpdateStockQty(oi.id, Number(st.qty) - oi.qty);
-                }
-
                 const orderObj = {
                     id: 'ORD-' + Date.now().toString().slice(-6),
                     ration_card: user.ration_card,
                     beneficiary_name: user.name,
+                    mobile: user.mobile || '',
                     items: orderItems,
                     total_amount: totalAmount,
                     created_at: new Date().toISOString()
                 };
                 await dbInsertOrder(orderObj);
 
+                for (const oi of orderItems) {
+                    const st = STATE.stocks.find(s => s.id === oi.id);
+                    await dbUpdateStockQty(oi.id, Number(st.qty) - oi.qty);
+                }
                 STATE.cart = {};
                 closeCartDrawer();
                 updateCartBadges();
