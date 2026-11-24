@@ -1675,7 +1675,6 @@
             const lang = STATE.prefs.lang || 'en';
             return item[lang] && item[lang].trim() ? item[lang] : item.en;
         }
-
         function applyLanguageAndPrefs() {
             const lang = STATE.prefs.lang || 'en';
             document.documentElement.lang = lang;
@@ -1711,4 +1710,837 @@
                 statusBadge.className = 'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
             } else if (st === 'LUNCH') {
                 statusBadge.textContent = '◐ LUNCH';
-                statusBadge.className = 'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20
+                statusBadge.className = 'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30';
+            } else {
+                statusBadge.textContent = '■ CLOSED';
+                statusBadge.className = 'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/30';
+            }
+        }
+
+        function setAppLanguage(lang) {
+            STATE.prefs.lang = lang;
+            writeLocal(LKEYS.PREFS, STATE.prefs);
+            applyLanguageAndPrefs();
+            renderAllViews();
+        }
+
+        function toggleAccessibility() {
+            STATE.prefs.largeFont = document.getElementById('toggle-large-font').checked;
+            STATE.prefs.highContrast = document.getElementById('toggle-high-contrast').checked;
+            writeLocal(LKEYS.PREFS, STATE.prefs);
+            applyLanguageAndPrefs();
+        }
+
+        // =====================================================================
+        // 7. PORTAL & TAB NAVIGATION
+        // =====================================================================
+        function getCurrentUser() {
+            const card = localStorage.getItem(LKEYS.USER_SESSION);
+            if (!card) return null;
+            return STATE.beneficiaries.find(b => b.ration_card === card) || null;
+        }
+
+        function isAdminLoggedIn() {
+            return localStorage.getItem(LKEYS.ADMIN_SESSION) === 'true';
+        }
+
+        function switchPortal(portal) {
+            const pUser = document.getElementById('portal-user');
+            const pAdmin = document.getElementById('portal-admin');
+            const bUser = document.getElementById('btn-portal-user');
+            const bAdmin = document.getElementById('btn-portal-admin');
+
+            if (portal === 'admin') {
+                pUser.classList.add('hidden');
+                pAdmin.classList.remove('hidden');
+                bAdmin.className = 'flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-tnEmerald-950 shadow';
+                bUser.className = 'flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-emerald-200 hover:text-white';
+            } else {
+                pAdmin.classList.add('hidden');
+                pUser.classList.remove('hidden');
+                bUser.className = 'flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-white text-tnEmerald-950 shadow';
+                bAdmin.className = 'flex-1 md:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all text-emerald-200 hover:text-white';
+            }
+            renderAllViews();
+        }
+
+        function switchAuthMode(mode) {
+            const fLogin = document.getElementById('form-user-login');
+            const fReg = document.getElementById('form-user-register');
+            const tLogin = document.getElementById('auth-tab-login');
+            const tReg = document.getElementById('auth-tab-register');
+
+            if (mode === 'register') {
+                fLogin.classList.add('hidden');
+                fReg.classList.remove('hidden');
+                tReg.className = 'py-2.5 rounded-xl text-xs font-extrabold transition bg-white text-tnEmerald-900 shadow-sm';
+                tLogin.className = 'py-2.5 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900';
+            } else {
+                fReg.classList.add('hidden');
+                fLogin.classList.remove('hidden');
+                tLogin.className = 'py-2.5 rounded-xl text-xs font-extrabold transition bg-white text-tnEmerald-900 shadow-sm';
+                tReg.className = 'py-2.5 rounded-xl text-xs font-extrabold transition text-slate-600 hover:text-slate-900';
+            }
+        }
+
+        function switchUserTab(tab) {
+            ['stocks', 'queue', 'history', 'settings'].forEach(id => {
+                const view = document.getElementById('uview-' + id);
+                const btn = document.getElementById('utab-' + id);
+                if (!view || !btn) return;
+                if (id === tab) {
+                    view.classList.remove('hidden');
+                    btn.className = 'user-nav-btn flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition bg-tnEmerald-700 text-white shadow-sm whitespace-nowrap';
+                } else {
+                    view.classList.add('hidden');
+                    btn.className = 'user-nav-btn flex-1 lg:flex-initial flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition text-slate-600 hover:bg-slate-100 whitespace-nowrap';
+                }
+            });
+            if (tab === 'queue') renderUserQueue();
+            lucide.createIcons();
+        }
+
+        function switchAdminTab(tab) {
+            ['command', 'beneficiaries', 'asettings'].forEach(id => {
+                const view = document.getElementById('aview-' + id);
+                const btn = document.getElementById('atab-' + id);
+                if (!view || !btn) return;
+                if (id === tab) {
+                    view.classList.remove('hidden');
+                    btn.className = 'admin-nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white flex items-center gap-1.5';
+                } else {
+                    view.classList.add('hidden');
+                    btn.className = 'admin-nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5';
+                }
+            });
+            renderAllViews();
+        }
+
+        // =====================================================================
+        // 8. BENEFICIARY & ADMIN AUTHENTICATION
+        // =====================================================================
+        async function handleUserRegister(e) {
+            e.preventDefault();
+            const card = document.getElementById('reg-card-input').value.trim().toUpperCase();
+            const name = document.getElementById('reg-name-input').value.trim();
+            const mobile = document.getElementById('reg-mobile-input').value.trim();
+            const pass1 = document.getElementById('reg-pass-input').value;
+            const pass2 = document.getElementById('reg-pass2-input').value;
+
+            if (pass1 !== pass2) {
+                showToast('Passwords do not match.', 'error');
+                return;
+            }
+            if (STATE.beneficiaries.some(b => b.ration_card === card)) {
+                showToast('This Smart Ration Card is already registered. Please Sign In.', 'warn');
+                switchAuthMode('login');
+                document.getElementById('login-card-input').value = card;
+                return;
+            }
+
+            try {
+                const password_hash = await hashPassword(pass1);
+                const now = new Date().toISOString();
+                await dbUpsertBeneficiary({
+                    ration_card: card,
+                    name,
+                    mobile,
+                    password_hash,
+                    last_login: now
+                });
+                localStorage.setItem(LKEYS.USER_SESSION, card);
+                e.target.reset();
+                showToast(`Welcome, ${name}! Account registered.`);
+                renderAllViews();
+            } catch (err) {
+                console.error(err);
+                showToast('Registration failed: ' + (err.message || 'Check database'), 'error');
+            }
+        }
+
+        async function handleUserLogin(e) {
+            e.preventDefault();
+            const card = document.getElementById('login-card-input').value.trim().toUpperCase();
+            const pass = document.getElementById('login-pass-input').value;
+
+            const user = STATE.beneficiaries.find(b => b.ration_card === card);
+            if (!user) {
+                showToast('Ration Card not found. Please register first.', 'error');
+                return;
+            }
+
+            const hash = await hashPassword(pass);
+            if (user.password_hash !== hash) {
+                showToast('Incorrect password. Please try again.', 'error');
+                return;
+            }
+
+            try {
+                await dbUpsertBeneficiary({ ...user, last_login: new Date().toISOString() });
+            } catch (err) {
+                console.warn('Login timestamp update failed:', err);
+            }
+
+            localStorage.setItem(LKEYS.USER_SESSION, card);
+            e.target.reset();
+            showToast(`Signed in as ${user.name}`);
+            renderAllViews();
+        }
+
+        function logoutUser() {
+            localStorage.removeItem(LKEYS.USER_SESSION);
+            STATE.cart = {};
+            showToast('Signed out successfully.');
+            renderAllViews();
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const shop = document.getElementById('admin-shop-input').value.trim().toUpperCase();
+            const pin = document.getElementById('admin-pin-input').value.trim();
+
+            if (shop === AUTHORIZED_SHOP_CODE && pin === AUTHORIZED_DEALER_PIN) {
+                localStorage.setItem(LKEYS.ADMIN_SESSION, 'true');
+                e.target.reset();
+                showToast('FPS Dealer Admin Console unlocked.');
+                renderAllViews();
+            } else {
+                showToast('Invalid FPS Shop Code or Dealer PIN.', 'error');
+            }
+        }
+
+        function logoutAdmin() {
+            localStorage.removeItem(LKEYS.ADMIN_SESSION);
+            showToast('Dealer Admin logged out.');
+            renderAllViews();
+        }
+
+        // =====================================================================
+        // 9. BENEFICIARY STOCKS, CART & CHECKOUT
+        // =====================================================================
+        function getUserUsedQuota(rationCard, stockId) {
+            return STATE.orders
+                .filter(o => o.ration_card === rationCard)
+                .reduce((sum, o) => {
+                    const items = Array.isArray(o.items) ? o.items : [];
+                    const found = items.find(i => i.id === stockId);
+                    return sum + (found ? Number(found.qty) || 0 : 0);
+                }, 0);
+        }
+
+        function adjustPickerQty(stockId, delta, maxAllowed) {
+            const current = STATE.qtyPickers[stockId] || 1;
+            const next = Math.max(1, Math.min(maxAllowed, current + delta));
+            STATE.qtyPickers[stockId] = next;
+            const el = document.getElementById('picker-qty-' + stockId);
+            if (el) el.textContent = next;
+        }
+
+        function addToCart(stockId) {
+            const user = getCurrentUser();
+            const item = STATE.stocks.find(s => s.id === stockId);
+            if (!user || !item) return;
+
+            const used = getUserUsedQuota(user.ration_card, stockId);
+            const quotaLeft = Math.max(0, (Number(item.quota) || 0) - used);
+            const maxAllowed = Math.min(Number(item.qty) || 0, quotaLeft);
+
+            if (maxAllowed <= 0) {
+                showToast('Out of stock or monthly quota reached.', 'warn');
+                return;
+            }
+
+            const chosen = Math.min(maxAllowed, STATE.qtyPickers[stockId] || 1);
+            STATE.cart[stockId] = chosen;
+            showToast(`${getStockLabel(item)} (${chosen} ${item.unit}) added to cart.`);
+            updateCartBadges();
+            renderUserStocks();
+        }
+
+        function removeFromCart(stockId) {
+            delete STATE.cart[stockId];
+            updateCartBadges();
+            renderCartDrawer();
+            renderUserStocks();
+        }
+
+        function updateCartBadges() {
+            const count = Object.keys(STATE.cart).length;
+            const hBadge = document.getElementById('header-cart-count');
+            const nBadge = document.getElementById('nav-cart-badge');
+            if (hBadge) hBadge.textContent = count;
+            if (nBadge) {
+                nBadge.textContent = count;
+                nBadge.classList.toggle('hidden', count === 0);
+            }
+        }
+
+        function openCartDrawer() {
+            document.getElementById('cart-drawer-overlay').classList.remove('hidden');
+            renderCartDrawer();
+            lucide.createIcons();
+        }
+
+        function closeCartDrawer() {
+            document.getElementById('cart-drawer-overlay').classList.add('hidden');
+        }
+
+        function renderCartDrawer() {
+            const container = document.getElementById('cart-items-container');
+            const totalEl = document.getElementById('cart-total-amount');
+            const btn = document.getElementById('btn-checkout-cart');
+            const ids = Object.keys(STATE.cart);
+
+            if (!ids.length) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm font-semibold">Your ration cart is empty.</div>`;
+                totalEl.textContent = '₹0.00';
+                btn.disabled = true;
+                return;
+            }
+
+            let total = 0;
+            container.innerHTML = ids.map(id => {
+                const item = STATE.stocks.find(s => s.id === id);
+                if (!item) return '';
+                const qty = STATE.cart[id];
+                const sub = qty * (Number(item.price) || 0);
+                total += sub;
+                return `
+                    <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                        <div>
+                            <h4 class="font-extrabold text-sm text-slate-900">${escapeHtml(getStockLabel(item))}</h4>
+                            <p class="text-xs text-slate-500">${qty} ${escapeHtml(item.unit)} × ₹${Number(item.price).toFixed(2)}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-mono font-extrabold text-sm text-tnEmerald-800">₹${sub.toFixed(2)}</span>
+                            <button onclick="removeFromCart('${item.id}')" class="text-rose-500 hover:text-rose-700">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            totalEl.textContent = '₹' + total.toFixed(2);
+            btn.disabled = false;
+            lucide.createIcons();
+        }
+
+        async function checkoutCart() {
+            const user = getCurrentUser();
+            const ids = Object.keys(STATE.cart);
+            if (!user || !ids.length) return;
+
+            const orderItems = [];
+            let totalAmount = 0;
+
+            for (const id of ids) {
+                const item = STATE.stocks.find(s => s.id === id);
+                const qty = STATE.cart[id];
+                if (!item || qty <= 0 || qty > Number(item.qty)) {
+                    showToast(`Insufficient stock for ${item ? item.en : id}.`, 'error');
+                    return;
+                }
+                const subtotal = qty * (Number(item.price) || 0);
+                totalAmount += subtotal;
+                orderItems.push({
+                    id: item.id,
+                    en: item.en,
+                    qty,
+                    unit: item.unit,
+                    price: Number(item.price) || 0,
+                    subtotal
+                });
+            }
+
+            try {
+                for (const oi of orderItems) {
+                    const st = STATE.stocks.find(s => s.id === oi.id);
+                    await dbUpdateStockQty(oi.id, Number(st.qty) - oi.qty);
+                }
+
+                const orderObj = {
+                    id: 'ORD-' + Date.now().toString().slice(-6),
+                    ration_card: user.ration_card,
+                    beneficiary_name: user.name,
+                    items: orderItems,
+                    total_amount: totalAmount,
+                    created_at: new Date().toISOString()
+                };
+                await dbInsertOrder(orderObj);
+
+                STATE.cart = {};
+                closeCartDrawer();
+                updateCartBadges();
+                playChime();
+                showToast(`Order ${orderObj.id} confirmed! Live stock updated.`);
+                renderAllViews();
+            } catch (err) {
+                console.error(err);
+                showToast('Order failed: ' + (err.message || 'Check database'), 'error');
+            }
+        }
+
+        function renderUserStocks() {
+            const user = getCurrentUser();
+            const grid = document.getElementById('user-stocks-grid');
+            if (!user || !grid) return;
+
+            grid.innerHTML = STATE.stocks.map(item => {
+                const used = getUserUsedQuota(user.ration_card, item.id);
+                const quotaLeft = Math.max(0, (Number(item.quota) || 0) - used);
+                const shopQty = Number(item.qty) || 0;
+                const maxAllowed = Math.min(shopQty, quotaLeft);
+                const picked = Math.min(Math.max(1, maxAllowed), STATE.qtyPickers[item.id] || 1);
+                STATE.qtyPickers[item.id] = picked;
+                const inCartQty = STATE.cart[item.id] || 0;
+
+                const statusBadge = shopQty <= 0
+                    ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">${t('outOfStock')}</span>`
+                    : shopQty <= 20
+                        ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">${t('lowStock')}</span>`
+                        : `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">${t('inStock')}</span>`;
+
+                const priceLabel = Number(item.price) <= 0
+                    ? `<span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg">${t('freeLabel')}</span>`
+                    : `<span class="text-sm font-extrabold font-mono text-slate-900">₹${Number(item.price).toFixed(2)}/${escapeHtml(item.unit)}</span>`;
+
+                return `
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="relative">
+                            ${getCommodityArtwork(item)}
+                            <div class="absolute top-3 left-3">${statusBadge}</div>
+                            ${inCartQty > 0 ? `<div class="absolute top-3 right-3 bg-tnGold-500 text-tnEmerald-950 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow">In Cart: ${inCartQty}</div>` : ''}
+                        </div>
+                        <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                            <div>
+                                <div class="flex items-start justify-between gap-2">
+                                    <h3 class="font-extrabold text-slate-900 text-base">${escapeHtml(getStockLabel(item))}</h3>
+                                    ${priceLabel}
+                                </div>
+                                <div class="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+                                    <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                                        <span class="text-slate-400 block">${t('shopStock')}</span>
+                                        <span class="font-extrabold font-mono text-slate-800">${shopQty} ${escapeHtml(item.unit)}</span>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                                        <span class="text-slate-400 block">${t('quotaLeft')}</span>
+                                        <span class="font-extrabold font-mono text-tnEmerald-800">${quotaLeft} / ${item.quota} ${escapeHtml(item.unit)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 pt-1">
+                                <div class="flex items-center border border-slate-300 rounded-xl overflow-hidden">
+                                    <button type="button" onclick="adjustPickerQty('${item.id}', -1, ${Math.max(1, maxAllowed)})" class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 font-bold text-sm">−</button>
+                                    <span id="picker-qty-${item.id}" class="px-3 text-sm font-extrabold font-mono">${maxAllowed > 0 ? picked : 0}</span>
+                                    <button type="button" onclick="adjustPickerQty('${item.id}', 1, ${Math.max(1, maxAllowed)})" class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 font-bold text-sm">+</button>
+                                </div>
+                                <button type="button" onclick="addToCart('${item.id}')" ${maxAllowed <= 0 ? 'disabled' : ''}
+                                    class="flex-1 bg-tnEmerald-700 hover:bg-tnEmerald-800 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition">
+                                    ${inCartQty > 0 ? t('inCart') : t('addToCart')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // =====================================================================
+        // 10. QUEUE TOKEN & QR PASS
+        // =====================================================================
+        function selectTimeSlot(slot) {
+            STATE.selectedSlot = slot;
+            document.querySelectorAll('.slot-pill').forEach(btn => {
+                const active = btn.dataset.slot === slot;
+                btn.className = active
+                    ? 'slot-pill p-3.5 rounded-2xl border-2 border-tnEmerald-600 bg-tnEmerald-50/70 text-left transition'
+                    : 'slot-pill p-3.5 rounded-2xl border border-slate-200 hover:border-tnEmerald-400 bg-white text-left transition';
+            });
+        }
+
+        async function bookTokenOneTap() {
+            const user = getCurrentUser();
+            if (!user) return;
+
+            const existing = STATE.queue.find(q => q.ration_card === user.ration_card && q.status !== 'completed');
+            if (existing) {
+                showToast(`You already have active Token #${existing.token}.`, 'warn');
+                return;
+            }
+
+            const maxTok = STATE.queue.reduce((m, q) => Math.max(m, Number(q.token) || 100), Number(STATE.shop.current_serving) || 100);
+            const newTok = {
+                token: maxTok + 1,
+                ration_card: user.ration_card,
+                beneficiary_name: user.name,
+                slot: STATE.selectedSlot,
+                status: 'waiting',
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                await dbUpsertQueueToken(newTok);
+                playChime();
+                showToast(`Token #${newTok.token} booked for ${newTok.slot}!`);
+                renderAllViews();
+            } catch (err) {
+                console.error(err);
+                showToast('Could not book token: ' + (err.message || 'Check DB'), 'error');
+            }
+        }
+
+        async function cancelUserToken() {
+            const user = getCurrentUser();
+            if (!user) return;
+            const myTok = STATE.queue.find(q => q.ration_card === user.ration_card && q.status !== 'completed');
+            if (!myTok) return;
+            await dbDeleteQueueToken(myTok.token);
+            showToast(`Token #${myTok.token} cancelled.`);
+            renderAllViews();
+        }
+
+        function renderUserQueue() {
+            const user = getCurrentUser();
+            if (!user) return;
+
+            const serving = Number(STATE.shop.current_serving) || 100;
+            const pace = Number(STATE.shop.service_pace) || 4;
+            const myTok = STATE.queue.find(q => q.ration_card === user.ration_card && q.status !== 'completed');
+
+            document.getElementById('u-kpi-serving').textContent = '#' + serving;
+
+            const bookCard = document.getElementById('u-booking-card');
+            const passCard = document.getElementById('u-active-pass-card');
+
+            if (!myTok) {
+                document.getElementById('u-kpi-mytoken').textContent = '—';
+                document.getElementById('u-kpi-ahead').textContent = '—';
+                document.getElementById('u-kpi-wait').textContent = '—';
+                bookCard.classList.remove('hidden');
+                passCard.classList.add('hidden');
+                return;
+            }
+
+            const ahead = STATE.queue.filter(q => q.status === 'waiting' && Number(q.token) < Number(myTok.token)).length;
+            const waitMins = myTok.status === 'serving' ? 0 : (ahead + 1) * pace;
+
+            document.getElementById('u-kpi-mytoken').textContent = '#' + myTok.token;
+            document.getElementById('u-kpi-ahead').textContent = ahead;
+            document.getElementById('u-kpi-wait').textContent = waitMins === 0 ? 'NOW' : `${waitMins}m`;
+
+            bookCard.classList.add('hidden');
+            passCard.classList.remove('hidden');
+
+            document.getElementById('u-pass-slot-badge').textContent = myTok.slot || 'Morning';
+            document.getElementById('u-qr-token-big').textContent = '#' + myTok.token;
+            document.getElementById('u-qr-card-label').textContent = `${user.name} • ${user.ration_card}`;
+
+            const headline = document.getElementById('u-status-headline');
+            const subtext = document.getElementById('u-status-subtext');
+            if (myTok.status === 'serving' || Number(myTok.token) === serving) {
+                headline.textContent = `It's your turn! Proceed to Counter (${AUTHORIZED_SHOP_CODE})`;
+                subtext.textContent = 'Show this QR code to the FPS Dealer for instant verification.';
+            } else {
+                headline.textContent = `${ahead} beneficiary(s) ahead of Token #${myTok.token}`;
+                subtext.textContent = `Estimated wait: ~${waitMins} mins (${pace} mins/card).`;
+            }
+
+            const qrBox = document.getElementById('user-qrcode-box');
+            qrBox.innerHTML = '';
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(qrBox, {
+                    text: JSON.stringify({ shop: AUTHORIZED_SHOP_CODE, token: myTok.token, card: user.ration_card, slot: myTok.slot }),
+                    width: 140,
+                    height: 140,
+                    colorDark: '#064e3b',
+                    colorLight: '#ffffff'
+                });
+            }
+        }
+
+        function renderUserHistory() {
+            const user = getCurrentUser();
+            const list = document.getElementById('user-receipts-list');
+            if (!user || !list) return;
+
+            const myOrders = STATE.orders.filter(o => o.ration_card === user.ration_card);
+            document.getElementById('sidebar-orders-count').textContent = `${myOrders.length} Orders`;
+
+            if (!myOrders.length) {
+                list.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm font-semibold">No orders placed yet for card ${escapeHtml(user.ration_card)}.</div>`;
+                return;
+            }
+
+            list.innerHTML = myOrders.map(o => {
+                const items = Array.isArray(o.items) ? o.items : [];
+                const summary = items.map(i => `${i.en} (${i.qty} ${i.unit})`).join(', ');
+                return `
+                    <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-xs font-extrabold bg-tnEmerald-100 text-tnEmerald-900 px-2 py-0.5 rounded">${escapeHtml(o.id)}</span>
+                                <span class="text-xs text-slate-500">${formatDateTime(o.created_at)}</span>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 mt-1">${escapeHtml(summary)}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-mono text-base font-extrabold text-tnEmerald-800">₹${Number(o.total_amount || 0).toFixed(2)}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // =====================================================================
+        // 11. ADMIN DEALER ACTIONS & RENDERING
+        // =====================================================================
+        async function adminAdjustStock(stockId, delta) {
+            const item = STATE.stocks.find(s => s.id === stockId);
+            if (!item) return;
+            await dbUpdateStockQty(stockId, (Number(item.qty) || 0) + delta);
+            renderAllViews();
+        }
+
+        async function adminDeleteCommodity(stockId) {
+            if (!confirm('Remove this commodity from live inventory?')) return;
+            await dbDeleteStock(stockId);
+            showToast('Commodity removed.');
+            renderAllViews();
+        }
+
+        function openAddCommodityModal() {
+            document.getElementById('add-commodity-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeAddCommodityModal() {
+            document.getElementById('add-commodity-modal').classList.add('hidden');
+        }
+
+        async function saveNewCommodity(e) {
+            e.preventDefault();
+            const en = document.getElementById('new-item-en').value.trim();
+            const ta = document.getElementById('new-item-ta').value.trim() || en;
+            const image_url = document.getElementById('new-item-img').value.trim();
+            const qty = Number(document.getElementById('new-item-qty').value) || 0;
+            const unit = document.getElementById('new-item-unit').value;
+            const price = Number(document.getElementById('new-item-price').value) || 0;
+            const quota = Number(document.getElementById('new-item-quota').value) || 1;
+
+            const newItem = {
+                id: 's_' + Date.now().toString().slice(-6),
+                en, ta, hi: en, te: en, ml: en, kn: en, ar: en,
+                image_type: 'default',
+                image_url,
+                qty, unit, price, quota
+            };
+
+            try {
+                await dbInsertStock(newItem);
+                e.target.reset();
+                closeAddCommodityModal();
+                showToast(`${en} added to live shop inventory.`);
+                renderAllViews();
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to add commodity: ' + (err.message || 'Check DB'), 'error');
+            }
+        }
+
+        async function adminCallNextToken() {
+            const currentServing = STATE.queue.find(q => q.status === 'serving');
+            if (currentServing) {
+                await dbUpsertQueueToken({ ...currentServing, status: 'completed' });
+            }
+
+            const nextWaiting = STATE.queue
+                .filter(q => q.status === 'waiting')
+                .sort((a, b) => Number(a.token) - Number(b.token))[0];
+
+            if (!nextWaiting) {
+                showToast('No waiting tokens in queue.', 'warn');
+                renderAllViews();
+                return;
+            }
+
+            await dbUpsertQueueToken({ ...nextWaiting, status: 'serving' });
+            STATE.shop.current_serving = Number(nextWaiting.token);
+            await dbSaveShopState();
+            playChime();
+            showToast(`Now serving Token #${nextWaiting.token} (${nextWaiting.beneficiary_name})`);
+            renderAllViews();
+        }
+
+        async function updateAdminShopSettings() {
+            STATE.shop.shop_status = document.getElementById('admin-setting-status').value;
+            STATE.shop.service_pace = Number(document.getElementById('admin-setting-pace').value) || 4;
+            STATE.shop.max_tokens = Number(document.getElementById('admin-setting-maxtokens').value) || 50;
+            await dbSaveShopState();
+            applyLanguageAndPrefs();
+            showToast('Shop settings saved.');
+            renderAllViews();
+        }
+
+        function renderAdminBeneficiaries() {
+            const container = document.getElementById('admin-beneficiaries-list');
+            if (!container) return;
+            const q = (document.getElementById('admin-user-search')?.value || '').trim().toLowerCase();
+
+            const filtered = STATE.beneficiaries.filter(b =>
+                !q ||
+                (b.name || '').toLowerCase().includes(q) ||
+                (b.ration_card || '').toLowerCase().includes(q) ||
+                (b.mobile || '').toLowerCase().includes(q)
+            );
+
+            if (!filtered.length) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No beneficiaries found.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(b => {
+                const orders = STATE.orders.filter(o => o.ration_card === b.ration_card);
+                const ordersHtml = orders.length
+                    ? orders.map(o => {
+                        const items = (Array.isArray(o.items) ? o.items : []).map(i => `${i.en} × ${i.qty}`).join(', ');
+                        return `<div class="text-xs bg-white p-2.5 rounded-xl border border-slate-200 flex justify-between gap-2"><span><strong>${escapeHtml(o.id)}</strong>: ${escapeHtml(items)}</span><span class="font-mono font-bold text-tnEmerald-800">₹${Number(o.total_amount || 0).toFixed(2)}</span></div>`;
+                    }).join('')
+                    : `<p class="text-xs text-slate-400">No purchases yet.</p>`;
+
+                return `
+                    <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-2.5">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <h4 class="font-extrabold text-slate-900 text-sm">${escapeHtml(b.name)}</h4>
+                                <p class="font-mono text-xs text-slate-500">${escapeHtml(b.ration_card)} • ${escapeHtml(b.mobile)}</p>
+                            </div>
+                            <span class="text-xs font-bold bg-tnEmerald-100 text-tnEmerald-900 px-2.5 py-1 rounded-full">${orders.length} Orders</span>
+                        </div>
+                        <div class="space-y-1.5">${ordersHtml}</div>
+                    </div>`;
+            }).join('');
+        }
+
+        function renderAdminViews() {
+            const loginScreen = document.getElementById('admin-login-screen');
+            const workspace = document.getElementById('admin-workspace');
+            if (!isAdminLoggedIn()) {
+                loginScreen.classList.remove('hidden');
+                workspace.classList.add('hidden');
+                return;
+            }
+
+            loginScreen.classList.add('hidden');
+            workspace.classList.remove('hidden');
+
+            const waitingTokens = STATE.queue.filter(q => q.status === 'waiting');
+            const totalStock = STATE.stocks.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+
+            document.getElementById('a-kpi-users').textContent = STATE.beneficiaries.length;
+            document.getElementById('admin-users-badge').textContent = STATE.beneficiaries.length;
+            document.getElementById('a-kpi-orders').textContent = STATE.orders.length;
+            document.getElementById('a-kpi-stock').textContent = totalStock;
+            document.getElementById('a-kpi-waiting').textContent = waitingTokens.length;
+            document.getElementById('a-deck-token').textContent = `Serving #${STATE.shop.current_serving || 100}`;
+
+            document.getElementById('admin-setting-status').value = STATE.shop.shop_status || 'OPEN';
+            document.getElementById('admin-setting-pace').value = STATE.shop.service_pace || 4;
+            document.getElementById('admin-setting-maxtokens').value = STATE.shop.max_tokens || 50;
+
+            const tbody = document.getElementById('admin-stocks-tbody');
+            tbody.innerHTML = STATE.stocks.map(s => `
+                <tr>
+                    <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(s.en)}<span class="block text-[11px] text-slate-400 font-normal">${escapeHtml(s.ta || '')}</span></td>
+                    <td class="py-3 px-4 font-mono text-xs">${Number(s.price) <= 0 ? 'FREE' : '₹' + Number(s.price).toFixed(2)}</td>
+                    <td class="py-3 px-4 font-mono font-extrabold ${Number(s.qty) <= 20 ? 'text-rose-600' : 'text-tnEmerald-800'}">${s.qty} ${escapeHtml(s.unit)}</td>
+                    <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="adminAdjustStock('${s.id}', -10)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold">-10</button>
+                        <button onclick="adminAdjustStock('${s.id}', 10)" class="px-2 py-1 rounded-lg bg-tnEmerald-100 hover:bg-tnEmerald-200 text-tnEmerald-900 text-xs font-bold">+10</button>
+                        <button onclick="adminAdjustStock('${s.id}', 50)" class="px-2 py-1 rounded-lg bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white text-xs font-bold">+50</button>
+                        <button onclick="adminDeleteCommodity('${s.id}')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold">✕</button>
+                    </td>
+                </tr>`).join('');
+
+            const feed = document.getElementById('admin-live-orders-feed');
+            feed.innerHTML = STATE.orders.length
+                ? STATE.orders.slice(0, 10).map(o => `
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2">
+                        <div>
+                            <span class="font-extrabold text-slate-900">${escapeHtml(o.beneficiary_name)}</span>
+                            <span class="block text-slate-500 font-mono">${escapeHtml(o.id)} • ${formatDateTime(o.created_at)}</span>
+                        </div>
+                        <span class="font-mono font-extrabold text-tnEmerald-800">₹${Number(o.total_amount || 0).toFixed(2)}</span>
+                    </div>`).join('')
+                : `<p class="text-xs text-slate-400 text-center py-6">No incoming orders yet.</p>`;
+
+            const qList = document.getElementById('admin-queue-list');
+            const activeQ = STATE.queue.filter(q => q.status !== 'completed');
+            qList.innerHTML = activeQ.length
+                ? activeQ.map(q => `
+                    <div class="p-2.5 rounded-xl border ${q.status === 'serving' ? 'border-tnEmerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50'} flex items-center justify-between text-xs">
+                        <div>
+                            <span class="font-mono font-extrabold text-slate-900">#${q.token}</span>
+                            <span class="ml-1.5 font-semibold text-slate-700">${escapeHtml(q.beneficiary_name)}</span>
+                        </div>
+                        <span class="uppercase font-extrabold text-[10px] px-2 py-0.5 rounded-full ${q.status === 'serving' ? 'bg-tnEmerald-700 text-white' : 'bg-amber-100 text-amber-800'}">${q.status}</span>
+                    </div>`).join('')
+                : `<p class="text-xs text-slate-400 text-center py-4">Queue is empty.</p>`;
+
+            renderAdminBeneficiaries();
+        }
+
+        // =====================================================================
+        // 12. MASTER RENDER & INITIALIZATION
+        // =====================================================================
+        function renderAllViews() {
+            const user = getCurrentUser();
+            const uLogin = document.getElementById('user-login-screen');
+            const uWork = document.getElementById('user-workspace');
+
+            if (user) {
+                uLogin.classList.add('hidden');
+                uWork.classList.remove('hidden');
+                uWork.classList.add('grid');
+
+                document.getElementById('sidebar-user-name').textContent = user.name;
+                document.getElementById('sidebar-user-card').textContent = user.ration_card;
+                const mobSpan = document.querySelector('#sidebar-user-mobile span');
+                if (mobSpan) mobSpan.textContent = user.mobile || '—';
+
+                updateCartBadges();
+                renderUserStocks();
+                renderUserQueue();
+                renderUserHistory();
+            } else {
+                uWork.classList.add('hidden');
+                uWork.classList.remove('grid');
+                uLogin.classList.remove('hidden');
+            }
+
+            renderAdminViews();
+            lucide.createIcons();
+        }
+
+        async function seedInitialCloudDataIfEmpty() {
+            if (!isCloudConfigured || !supabaseClient) return;
+            try {
+                const { data: existingStocks } = await supabaseClient.from('stocks').select('id').limit(1);
+                if (existingStocks && existingStocks.length === 0) {
+                    await supabaseClient.from('stocks').insert(DEFAULT_STOCKS);
+                }
+                const { data: existingShop } = await supabaseClient.from('shop_state').select('shop_code').eq('shop_code', AUTHORIZED_SHOP_CODE).maybeSingle();
+                if (!existingShop) {
+                    await supabaseClient.from('shop_state').insert(STATE.shop);
+                }
+            } catch (e) {
+                console.warn('Initial cloud seed skipped:', e);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            await seedInitialCloudDataIfEmpty();
+            await loadAllData();
+            setupRealtimeSubscriptions();
+        });
+    </script>
+</body>
+</html>
