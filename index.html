@@ -1093,13 +1093,13 @@
         };
 
         const DEFAULT_STOCKS = [
-            { id: 's1', en: 'Boiled Rice', ta: 'புழுங்கல் அரிசி', hi: 'उबला चावल', te: 'ఉప్పుడు బియ్యం', ml: 'പുഴുക്കലരി', kn: 'ಕುಚಲಕ್ಕಿ', ar: 'أرز مسلوق', image_type: 'boiled_rice', image_url: '', qty: 520, unit: 'kg', price: 0, quota: 20 },
-            { id: 's2', en: 'Raw Rice', ta: 'பச்சரிசி', hi: 'कच्चा चावल', te: 'పచ్చి బియ్యం', ml: 'പച്ചരി', kn: 'ಅಕ್ಕಿ', ar: 'أرز خام', image_type: 'raw_rice', image_url: '', qty: 240, unit: 'kg', price: 0, quota: 10 },
-            { id: 's3', en: 'Sugar', ta: 'சர்க்கரை', hi: 'चीनी', te: 'చక్కెర', ml: 'പഞ്ചസാര', kn: 'ಸಕ್ಕರೆ', ar: 'سكر', image_type: 'sugar', image_url: '', qty: 110, unit: 'kg', price: 13.50, quota: 2 },
-            { id: 's4', en: 'Toor Dal', ta: 'துவரம் பருப்பு', hi: 'तूर दाल', te: 'కందిపప్పు', ml: 'തുവര പരിപ്പ്', kn: 'ತೊಗರಿ ಬೇಳೆ', ar: 'عدس تور', image_type: 'toor_dal', image_url: '', qty: 40, unit: 'kg', price: 30, quota: 1 },
-            { id: 's5', en: 'Palmolein Oil', ta: 'பாமாயில்', hi: 'पामोलिन तेल', te: 'పామాయిల్', ml: 'പാമോയിൽ', kn: 'ಪಾಮ್ ಆಯಿಲ್', ar: 'زيت النخيل', image_type: 'oil', image_url: '', qty: 75, unit: 'Packets', price: 25, quota: 1 },
-            { id: 's6', en: 'Wheat', ta: 'கோதுமை', hi: 'गेहूं', te: 'గోధుமలు', ml: 'ഗോതമ്പ്', kn: 'ಗೋಧಿ', ar: 'قمح', image_type: 'wheat', image_url: '', qty: 160, unit: 'kg', price: 0, quota: 5 },
-            { id: 's7', en: 'Ragi (Finger Millet)', ta: 'கேழ்வரகு', hi: 'रागी', te: 'రాగులు', ml: 'റാഗി', kn: 'ರಾಗಿ', ar: 'دخن الراغي', image_type: 'ragi', image_url: '', qty: 80, unit: 'kg', price: 0, quota: 2 }
+            { id: 's1', en: 'Boiled Rice', ta: 'புழுங்கல் அரிசி', hi: 'उबला चावल', te: 'ఉప్పుడు బియ్యం', ml: 'പുഴുക്കലരി', kn: 'ಕುಚಲಕ್ಕಿ', ar: 'أرز مسلوق', image_type: 'boiled_rice', image_url: 'https://5.imimg.com/data5/SELLER/Default/2025/6/521463599/RK/DY/HG/46033658/long-grain-parboiled-rice.jpg', qty: 520, unit: 'kg', price: 0, quota: 20 },
+            { id: 's2', en: 'Raw Rice', ta: 'பச்சரிசி', hi: 'कच्चा चावल', te: 'పచ్చి బియ్యం', ml: 'പച്ചരി', kn: 'ಅಕ್ಕಿ', ar: 'أرز خام', image_type: 'raw_rice', image_url: 'https://t4.ftcdn.net/jpg/03/09/22/29/360_F_309222978_boIWb07TufCqJ8al1keo6nnXASPsXPsy.jpg', qty: 240, unit: 'kg', price: 0, quota: 10 },
+            { id: 's3', en: 'Sugar', ta: 'சர்க்கரை', hi: 'चीनी', te: 'చక్కెర', ml: 'പഞ്ചസാര', kn: 'ಸಕ್ಕರೆ', ar: 'سكر', image_type: 'sugar', image_url: 'https://media.istockphoto.com/id/1371245517/photo/granulated-white-sugar-in-wooden-bowl-isolated-on-white-background-with-clipping-path.jpg', qty: 110, unit: 'kg', price: 13.50, quota: 2 },
+            { id: 's4', en: 'Toor Dal', ta: 'துவரம் பருப்பு', hi: 'तूर दाल', te: 'కందిపప్పు', ml: 'തുവര പരിപ്പ്', kn: 'ತೊಗರಿ ಬೇಳೆ', ar: 'عدس تور', image_type: 'toor_dal', image_url: 'https://t3.ftcdn.net/jpg/17/73/53/74/360_F_1773537433_AyJeyntXI4mfMRYs0Lgfs2hx8GVo5UnL.jpg', qty: 40, unit: 'kg', price: 30, quota: 1 },
+            { id: 's5', en: 'Palmolein Oil', ta: 'பாமாயில்', hi: 'पामोलिन तेल', te: 'పామాయిల్', ml: 'പാമോയിൽ', kn: 'ಪಾಮ್ ಆಯಿಲ್', ar: 'زيت النخيل', image_type: 'oil', image_url: 'https://img.magnific.com/premium-photo/palm-oil-bottle-isolated-white-background_255512-1084.jpg', qty: 75, unit: 'Packets', price: 25, quota: 1 },
+            { id: 's6', en: 'Wheat', ta: 'கோதுமை', hi: 'गेहूं', te: 'గోధుமలు', ml: 'ഗോതമ്പ്', kn: 'ಗೋಧಿ', ar: 'قمح', image_type: 'wheat', image_url: 'https://img.magnific.com/premium-photo/wheat-isolated-white-background_183352-588.jpg', qty: 160, unit: 'kg', price: 0, quota: 5 },
+            { id: 's7', en: 'Ragi (Finger Millet)', ta: 'கேழ்வரகு', hi: 'रागी', te: 'రాగులు', ml: 'റാഗി', kn: 'ರಾಗಿ', ar: 'دخن الراغي', image_type: 'ragi', image_url: 'https://organicmandya.com/cdn/shop/files/Fingermillet_Ragi.jpg', qty: 80, unit: 'kg', price: 0, quota: 2 }
         ];
 
         // Seed default demo beneficiaries (1 Senior 64yo, 1 Regular 32yo)
