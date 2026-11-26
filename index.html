@@ -690,33 +690,24 @@
                             </h3>
                             <span id="a-deck-token" class="font-mono font-extrabold text-tnGold-400 text-sm">Serving #100</span>
                         </div>
-                        <div class="p-4 space-y-3">
-                            <div class="p-4 space-y-2.5">
-    <!-- Call Next Token (Fixed Height & Inline Flex) -->
-    <button type="button" onclick="adminCallNextToken()" 
-        class="w-full min-h-[44px] bg-tnGold-500 hover:bg-tnGold-400 active:scale-[0.98] text-slate-950 font-extrabold py-2.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-xs">
-        <i data-lucide="skip-forward" class="w-4 h-4 shrink-0 text-slate-950"></i>
-        <span class="inline-block whitespace-nowrap">Call Next Waiting Token</span>
-    </button>
-
-    <!-- Skip Current Token (Push to Last) -->
-    <button type="button" onclick="adminSkipCurrentToken()" 
-        class="w-full min-h-[40px] bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold py-2 px-4 rounded-xl border border-slate-300 transition flex items-center justify-center gap-2 text-xs">
-        <i data-lucide="rotate-cw" class="w-3.5 h-3.5 shrink-0 text-slate-600"></i>
-        <span>Skip Current Token (Move to End)</span>
-    </button>
-
-    <div id="admin-queue-list" class="space-y-2 max-h-56 overflow-y-auto pt-1"></div>
-</div>
+                        <div class="p-4 space-y-2.5">
+                            <!-- Call Next Token -->
+                            <button type="button" onclick="adminCallNextToken()" 
+                                class="w-full min-h-[44px] bg-tnGold-500 hover:bg-tnGold-400 active:scale-[0.98] text-slate-950 font-extrabold py-2.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-xs">
+                                <i data-lucide="skip-forward" class="w-4 h-4 shrink-0 text-slate-950"></i>
+                                <span class="inline-block whitespace-nowrap">Call Next Waiting Token</span>
                             </button>
-                                <i data-lucide="skip-forward" class="w-4 h-4"></i>
-                                <span>Call Next Waiting Token</span>
+
+                            <!-- Skip Current Token (Push to Last) -->
+                            <button type="button" onclick="adminSkipCurrentToken()" 
+                                class="w-full min-h-[40px] bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold py-2 px-4 rounded-xl border border-slate-300 transition flex items-center justify-center gap-2 text-xs">
+                                <i data-lucide="rotate-cw" class="w-3.5 h-3.5 shrink-0 text-slate-600"></i>
+                                <span>Skip Current Token (Move to End)</span>
                             </button>
-                            <div id="admin-queue-list" class="space-y-2 max-h-56 overflow-y-auto"></div>
+
+                            <div id="admin-queue-list" class="space-y-2 max-h-56 overflow-y-auto pt-1"></div>
                         </div>
                     </div>
-                </div>
-            </div>
 
             <!-- ADMIN TAB 2: BENEFICIARIES DIRECTORY -->
             <div id="aview-beneficiaries" class="hidden space-y-5">
@@ -2933,7 +2924,6 @@
 
          if (window.lucide) lucide.createIcons();
      }
-        }
 
         function promptPurchaseConfirmation() {
             const user = getCurrentUser();
@@ -3269,11 +3259,8 @@ if (!existingToken) {
                     </div>`;
             }).join('');
         }
-```[cite: 7, 9]
 
----
-
-        // =====================================================================
+         // =====================================================================
         // QUEUE & HISTORY
         // =====================================================================
         function selectTimeSlot(slot) {
