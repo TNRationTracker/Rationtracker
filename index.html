@@ -1845,14 +1845,17 @@
             }
         }
 
-        function openCartDrawer() {
-            document.getElementById('cart-drawer-overlay').classList.remove('hidden');
+       function openCartDrawer() {
+            const overlay = document.getElementById('cart-drawer-overlay');
+            if (!overlay) return;
+            overlay.classList.remove('hidden');
             renderCartDrawer();
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         }
 
         function closeCartDrawer() {
-            document.getElementById('cart-drawer-overlay').classList.add('hidden');
+            const overlay = document.getElementById('cart-drawer-overlay');
+            if (overlay) overlay.classList.add('hidden');
         }
 
         function renderCartDrawer() {
@@ -1861,37 +1864,40 @@
             const totalEl = document.getElementById('cart-total-amount');
             const btn = document.getElementById('btn-checkout-cart');
             const deliverySection = document.getElementById('cart-delivery-section');
-            const ids = Object.keys(STATE.cart);
 
-            if (!user) return;
+            if (!container || !totalEl || !btn) return;
 
-            const isAllocated = isUserAllocatedToThisShop(user);
+            const userAge = user && user.age ? Number(user.age) : 35;
+            const isAllocated = user ? isUserAllocatedToThisShop(user) : true;
+            const isElder = userAge >= 60;
 
-            // Render Elder 60+ Delivery Section
-            const isElder = Number(user.age) >= 60;
-            if (isElder) {
-                deliverySection.className = 'p-3.5 rounded-2xl border border-amber-300 bg-amber-50/80 space-y-2';
-                deliverySection.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="chk-deliver-doorstep" class="w-4 h-4 accent-amber-600 rounded">
-                            <span class="text-xs font-extrabold text-amber-950">Deliver to House (Senior Citizen 60+)</span>
-                        </label>
-                        <span class="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">Age ${user.age} Eligible</span>
-                    </div>
-                    <div id="doorstep-address-input-wrap" class="mt-2">
-                        <input type="text" id="cart-doorstep-address" placeholder="Enter Full Door Delivery Address & Landmark"
-                            class="w-full px-3 py-2 text-xs border border-amber-300 rounded-xl bg-white outline-none focus:ring-2 focus:ring-amber-500 font-medium">
-                    </div>`;
-            } else {
-                deliverySection.className = 'p-3 rounded-2xl border border-slate-200 bg-slate-100 text-slate-500 text-xs flex items-center justify-between';
-                deliverySection.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="info" class="w-4 h-4 text-slate-400 shrink-0"></i>
-                        <span>Deliver to House is reserved for Senior Citizens (Age 60+).</span>
-                    </div>
-                    <span class="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded">Counter Pickup</span>`;
+            if (deliverySection) {
+                if (isElder) {
+                    deliverySection.className = 'p-3.5 rounded-2xl border border-amber-300 bg-amber-50/80 space-y-2';
+                    deliverySection.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="chk-deliver-doorstep" class="w-4 h-4 accent-amber-600 rounded">
+                                <span class="text-xs font-extrabold text-amber-950">Deliver to House (Senior Citizen 60+)</span>
+                            </label>
+                            <span class="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">Age ${userAge} Eligible</span>
+                        </div>
+                        <div id="doorstep-address-input-wrap" class="mt-2">
+                            <input type="text" id="cart-doorstep-address" placeholder="Enter Full Door Delivery Address & Landmark"
+                                class="w-full px-3 py-2 text-xs border border-amber-300 rounded-xl bg-white outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                        </div>`;
+                } else {
+                    deliverySection.className = 'p-3 rounded-2xl border border-slate-200 bg-slate-100 text-slate-500 text-xs flex items-center justify-between';
+                    deliverySection.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                            <span>Deliver to House is reserved for Senior Citizens (Age 60+).</span>
+                        </div>
+                        <span class="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded">Counter Pickup</span>`;
+                }
             }
+
+            const ids = Object.keys(STATE.cart || {});
 
             if (!ids.length) {
                 container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm font-semibold">Your ration cart is empty.</div>`;
@@ -1904,7 +1910,7 @@
             container.innerHTML = ids.map(id => {
                 const item = STATE.stocks.find(s => s.id === id);
                 if (!item) return '';
-                const qty = STATE.cart[id];
+                const qty = STATE.cart[id] || 0;
                 const sub = qty * (Number(item.price) || 0);
                 total += sub;
                 return `
@@ -1915,7 +1921,7 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="font-mono font-extrabold text-sm text-tnEmerald-800">₹${sub.toFixed(2)}</span>
-                            <button onclick="removeFromCart('${item.id}')" class="text-rose-500 hover:text-rose-700">
+                            <button type="button" onclick="removeFromCart('${item.id}')" class="text-rose-500 hover:text-rose-700">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -1924,10 +1930,7 @@
 
             totalEl.textContent = '₹' + total.toFixed(2);
             btn.disabled = !isAllocated;
-            if (!isAllocated) {
-                btn.title = `Your Smart Card is not allocated to FPS #${CURRENT_FPS_SHOP_CODE}`;
-            }
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         }
 
         // STEP 1: Confirmation Prompt ("Are you sure about this transaction?")
