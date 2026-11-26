@@ -754,14 +754,24 @@
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Max Tokens Per Slot</label>
                         <input type="number" id="admin-setting-maxtokens" min="10" max="200" value="50" onchange="updateAdminShopSettings()"
-                            class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+                            async function dbUpsertBeneficiary(record) {
+    if (isCloudConfigured && supabaseClient) {
+        const { data, error } = await supabaseClient
+            .from('beneficiaries')
+            .upsert(record, { onConflict: 'ration_card' });
 
-    <!-- ===================================================================== -->
+        if (error) {
+            console.error('Supabase write error details:', error);
+            showToast('Supabase Error: ' + error.message, 'error');
+            throw error; // Stops local mock save if the cloud database rejects it
+        }
+    }
+
+    const idx = STATE.beneficiaries.findIndex(b => b.ration_card === record.ration_card);
+    if (idx >= 0) STATE.beneficiaries[idx] = { ...STATE.beneficiaries[idx], ...record };
+    else STATE.beneficiaries.unshift(record);
+    writeLocal(LKEYS.BENEFICIARIES, STATE.beneficiaries);
+}
     <!-- FLOATING CART DRAWER (WITH DEMO ONLINE PAYMENT & ELDER 60+ DELIVERY)  -->
     <!-- ===================================================================== -->
     <div id="cart-drawer-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end">
