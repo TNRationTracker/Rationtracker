@@ -691,10 +691,23 @@
                             <span id="a-deck-token" class="font-mono font-extrabold text-tnGold-400 text-sm">Serving #100</span>
                         </div>
                         <div class="p-4 space-y-3">
-                            <button onclick="adminCallNextToken()" class="w-full bg-tnGold-500 hover:bg-tnGold-400 text-slate-950 font-extrabold py-2.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-xs">
-                                <button type="button" onclick="adminSkipCurrentToken()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-4 rounded-xl border border-slate-300 transition flex items-center justify-center gap-2 text-xs">
-                                <i data-lucide="rotate-cw" class="w-4 h-4 text-slate-600"></i>
-                                <span>Skip Current Token (Move to End)</span>
+                            <div class="p-4 space-y-2.5">
+    <!-- Call Next Token (Fixed Height & Inline Flex) -->
+    <button type="button" onclick="adminCallNextToken()" 
+        class="w-full min-h-[44px] bg-tnGold-500 hover:bg-tnGold-400 active:scale-[0.98] text-slate-950 font-extrabold py-2.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-xs">
+        <i data-lucide="skip-forward" class="w-4 h-4 shrink-0 text-slate-950"></i>
+        <span class="inline-block whitespace-nowrap">Call Next Waiting Token</span>
+    </button>
+
+    <!-- Skip Current Token (Push to Last) -->
+    <button type="button" onclick="adminSkipCurrentToken()" 
+        class="w-full min-h-[40px] bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold py-2 px-4 rounded-xl border border-slate-300 transition flex items-center justify-center gap-2 text-xs">
+        <i data-lucide="rotate-cw" class="w-3.5 h-3.5 shrink-0 text-slate-600"></i>
+        <span>Skip Current Token (Move to End)</span>
+    </button>
+
+    <div id="admin-queue-list" class="space-y-2 max-h-56 overflow-y-auto pt-1"></div>
+</div>
                             </button>
                                 <i data-lucide="skip-forward" class="w-4 h-4"></i>
                                 <span>Call Next Waiting Token</span>
@@ -1111,14 +1124,21 @@
         };
 
         const DEFAULT_STOCKS = [
-            { id: 's1', en: 'Boiled Rice', ta: 'புழுங்கல் அரிசி', hi: 'उबला चावल', te: 'ఉప్పుడు బియ్యం', ml: 'പുഴുക്കലരി', kn: 'ಕುಚಲಕ್ಕಿ', ar: 'أرز مسلوق', image_type: 'boiled_rice', image_url: '', qty: 520, unit: 'kg', price: 0, quota: 20 },
-            { id: 's2', en: 'Raw Rice', ta: 'பச்சரிசி', hi: 'कच्चा चावल', te: 'పచ్చి బియ్యం', ml: 'പച്ചരി', kn: 'ಅಕ್ಕಿ', ar: 'أرز خام', image_type: 'raw_rice', image_url: '', qty: 240, unit: 'kg', price: 0, quota: 10 },
-            { id: 's3', en: 'Sugar', ta: 'சர்க்கரை', hi: 'चीनी', te: 'చక్కెర', ml: 'പഞ്ചസാര', kn: 'ಸಕ್ಕರೆ', ar: 'سكر', image_type: 'sugar', image_url: '', qty: 110, unit: 'kg', price: 13.50, quota: 2 },
-            { id: 's4', en: 'Toor Dal', ta: 'துவரம் பருப்பு', hi: 'तूर दाल', te: 'కందిపప్పు', ml: 'തുവര പരിപ്പ്', kn: 'ತೊಗರಿ ಬೇಳೆ', ar: 'عدس تور', image_type: 'toor_dal', image_url: '', qty: 40, unit: 'kg', price: 30, quota: 1 },
-            { id: 's5', en: 'Palmolein Oil', ta: 'பாமாயில்', hi: 'पामोलिन तेल', te: 'పామాయిల్', ml: 'പാമോയിൽ', kn: 'ಪಾಮ್ ಆಯಿಲ್', ar: 'زيت النخيل', image_type: 'oil', image_url: '', qty: 75, unit: 'Packets', price: 25, quota: 1 },
-            { id: 's6', en: 'Wheat', ta: 'கோதுமை', hi: 'गेहूं', te: 'గోధుమలు', ml: 'ഗോതമ്പ്', kn: 'ಗೋಧಿ', ar: 'قمح', image_type: 'wheat', image_url: '', qty: 160, unit: 'kg', price: 0, quota: 5 },
-            { id: 's7', en: 'Ragi (Finger Millet)', ta: 'கேழ்வரகு', hi: 'रागी', te: 'రాగులు', ml: 'റാഗി', kn: 'ರಾಗಿ', ar: 'دخن الراغي', image_type: 'ragi', image_url: '', qty: 80, unit: 'kg', price: 0, quota: 2 }
-        ];
+    { id: 's1', en: 'Boiled Rice', ta: 'புழுங்கல் அரிசி', hi: 'उबला चावल', te: 'ఉప్పుడు బియ్యం', ml: 'പുഴുക്കലരി', kn: 'ಕುಚಲಕ್ಕಿ', ar: 'أرز مسلوق', image_type: 'boiled_rice', image_url: '', qty: 520, unit: 'kg', price: 0, quota: 20 },
+    { id: 's2', en: 'Raw Rice', ta: 'பச்சரிசி', hi: 'कच्चा चावल', te: 'పచ్చి బియ్యం', ml: 'പച്ചരി', kn: 'ಅಕ್ಕಿ', ar: 'أرز خام', image_type: 'raw_rice', image_url: '', qty: 240, unit: 'kg', price: 0, quota: 10 },
+    { id: 's3', en: 'Sugar', ta: 'சர்க்கரை', hi: 'चीनी', te: 'చక్కెర', ml: 'പഞ്ചസാര', kn: 'ಸಕ್ಕರೆ', ar: 'سكر', image_type: 'sugar', image_url: '', qty: 110, unit: 'kg', price: 13.50, quota: 2 },
+    { id: 's4', en: 'Toor Dal', ta: 'துவரம் பருப்பு', hi: 'तूर दाल', te: 'కందిపప్పు', ml: 'തുവര പരിപ്പ്', kn: 'ತೊಗರಿ ಬೇಳೆ', ar: 'عدس تور', image_type: 'toor_dal', image_url: '', qty: 40, unit: 'kg', price: 30, quota: 1 },
+    { id: 's5', en: 'Palmolein Oil', ta: 'பாமாயில்', hi: 'पामोलिन तेल', te: 'పామాయిల్', ml: 'പാമോയിൽ', kn: 'ಪಾಮ್ ಆಯಿಲ್', ar: 'زيت النخيل', image_type: 'oil', image_url: '', qty: 75, unit: 'Packets', price: 25, quota: 1 },
+    { id: 's6', en: 'Wheat', ta: 'கோதுமை', hi: 'गेहूं', te: 'గోధుమలు', ml: 'గోതമ്പ്', kn: 'ಗೋಧಿ', ar: 'قمح', image_type: 'wheat', image_url: '', qty: 160, unit: 'kg', price: 0, quota: 5 },
+    { id: 's7', en: 'Ragi (Finger Millet)', ta: 'கேழ்வரகு', hi: 'रागी', te: 'రాగులు', ml: 'റാഗി', kn: 'ರಾಗಿ', ar: 'دخن الراغي', image_type: 'ragi', image_url: '', qty: 80, unit: 'kg', price: 0, quota: 2 },
+    
+    // NEW COMMODITIES (100g Multiples with official TN Co-op / PDS rates)
+    { id: 's8', en: 'Black Chickpeas', ta: 'கருப்பு கொண்டைக்கடலை', hi: 'काला चना', te: 'నల్ల శనగలు', ml: 'കറുത്ത കടല', kn: 'ಕಪ್ಪು ಕಡಲೆ', ar: 'حمص أسود', image_type: 'black_chickpeas', image_url: '', qty: 350, unit: '100g', price: 3.50, quota: 10 },
+    { id: 's9', en: 'White Chickpeas', ta: 'வெள்ளை கொண்டைக்கடலை', hi: 'सफेद चना (काबुली)', te: 'తెల్ల శనగలు', ml: 'വെള്ളക്കടല', kn: 'ಬಿಳಿ ಕಡಲೆ', ar: 'حمص أبيض', image_type: 'white_chickpeas', image_url: '', qty: 250, unit: '100g', price: 4.50, quota: 10 },
+    { id: 's10', en: 'Groundnut', ta: 'நிலக்கடலை', hi: 'मूंगफली', te: 'వేరుశనగ', ml: 'നിലക്കടല', kn: 'ಕಡಲೆಕಾಯಿ', ar: 'فول سوداني', image_type: 'groundnut', image_url: '', qty: 300, unit: '100g', price: 4.00, quota: 10 },
+    { id: 's11', en: 'Roasted Gram', ta: 'பொட்டுக் கடலை', hi: 'भुना चना', te: 'పుట్నాల పప్పు', ml: 'പൊട്ടുകടല', kn: 'ಹುರಿಗಡಲೆ', ar: 'حمص محمص', image_type: 'roasted_gram', image_url: '', qty: 400, unit: '100g', price: 3.50, quota: 10 },
+    { id: 's12', en: 'Green Gram', ta: 'பச்சைப்பயறு', hi: 'मूंग दाल', te: 'పెసలు', ml: 'ചെറുപയർ', kn: 'ಹೆಸರು ಕಾಳು', ar: 'ماش أخضر', image_type: 'green_gram', image_url: '', qty: 280, unit: '100g', price: 3.50, quota: 10 }
+];
 
         const DEFAULT_BENEFICIARIES = [
             {
@@ -1154,6 +1174,8 @@
                 lblPassword: 'Beneficiary Password',
                 btnSignIn: 'Sign In to Ration Portal',
                 btnCreateAccount: 'Create Unique Account & Enter',
+                firstTimeReg: 'First time here? Register your Smart Card',
+                regUniqueDesc: 'Each Smart Ration Card can only register once. Saved details allow you to uniquely login anytime.',
                 lblFamilyHead: 'Family Head',
                 navStocks: 'Order Stocks & Cart',
                 navQueue: 'Queue Token & QR',
@@ -1165,31 +1187,69 @@
                 btnViewCart: 'View Cart',
                 addToCart: 'Add to Cart',
                 inCart: 'Update Cart',
+                shopLocked: 'Shop Locked',
                 outOfStock: 'OUT OF STOCK',
                 inStock: 'IN STOCK',
                 lowStock: 'LOW STOCK',
                 quotaLeft: 'Quota Left',
                 shopStock: 'Live Shop Stock',
                 freeLabel: 'FREE',
+                shopClosed: 'SHOP CLOSED',
+                lunchBreak: 'LUNCH BREAK',
+                shopClosedMsg: 'FPS is CLOSED. Orders & dispensation paused.',
+                lunchBreakMsg: 'FPS is on LUNCH BREAK. Orders paused.',
                 cartTitle: 'Your Ration Cart',
                 cartTotal: 'Total Payable',
+                cartEmpty: 'Your ration cart is empty.',
+                deliverDoorstep: 'Deliver to House (Senior Citizen 60+)',
+                counterPickup: 'Counter Pickup',
+                counterPickupDesc: 'Deliver to House is reserved for Senior Citizens (Age 60+).',
+                pickupSlotLabel: 'Select Token Pickup Slot',
+                slotMorning: 'Morning Slot (8:00 – 11:00 AM)',
+                slotMidday: 'Midday Slot (11:00 AM – 2:00 PM)',
+                slotEvening: 'Evening Slot (4:00 – 7:00 PM)',
+                payModeLabel: 'Select Payment Mode',
+                payOnline: 'Pay Online (Demo UPI)',
+                payCash: 'Cash at Counter',
+                btnProceedPurchase: 'Proceed to Purchase',
                 kpiServing: 'Now Serving',
                 kpiYourToken: 'Your Token',
                 kpiAhead: 'Ahead of You',
                 kpiWait: 'Est. Wait Time',
-                fastBookTitle: '1-Tap Instant Queue Token Booking',
-                fastBookSub: 'Pick a convenient time window and generate your QR pass in 1 click',
-                btnBookNow: 'Book Instant Token (1-Tap)',
+                noActiveTokenTitle: 'No Active Queue Token',
+                noActiveTokenDesc: 'Tokens are booked automatically when you place your ration order. Add your monthly ration items to cart and choose your time slot at checkout.',
+                btnGoToStocks: 'Go to Order Stocks & Cart',
                 activePassTitle: 'Live Queue Radar & Digital QR Pass',
                 lblQueueStatus: 'Live Queue Position',
+                yourTurnTitle: "It's your turn! Proceed to Counter",
+                yourTurnSub: 'Show this QR code to the FPS Dealer for instant verification.',
+                aheadSub: 'Estimated wait:',
                 btnPrintPass: 'Print Pass',
                 btnCancelToken: 'Cancel Token',
                 historyHeading: 'My Verified Buying History & e-Receipts',
                 historySub: 'Live record uniquely tied to your Smart Ration Card Number',
+                noHistory: 'No orders placed yet for card',
+                paymentSuccess: 'Payment Successful',
+                pendingApproval: 'Awaiting Dealer Approval',
+                doorstepBadge: 'Doorstep (60+)',
+                counterBadge: 'Counter',
+                btnViewBillQr: 'View Bill & QR',
                 settingsHeading: 'Language & Accessibility Preferences',
                 setLangTitle: 'Choose Application Language',
                 setLargeText: 'Large Text (Elder-Friendly)',
-                setHighContrast: 'High-Contrast Mode'
+                setHighContrast: 'High-Contrast Mode',
+                matchedShop: 'GOVERNMENT MATCHED SHOP',
+                assignedFps: 'Assigned Fair Price Shop:',
+                matchedShopDesc: 'Your Smart Card is verified for ration quota collection at this authorized terminal.',
+                authorized: '● Authorized',
+                lockedShop: 'ALLOCATED SHOP RESTRICTION',
+                lockedShopDesc: 'Under Tamil Nadu PDS laws, your Smart Card is strictly allocated to',
+                lockedShopSuffix: 'Purchasing from non-allocated shops is blocked.',
+                locked: '■ Purchase Locked',
+                elderBannerTitle: 'TN GOVT SENIOR CITIZEN WELFARE SCHEME',
+                elderBannerHead: 'Deliver to House Eligible (Beneficiary 60+ Years)',
+                elderBannerDesc: 'You are eligible for direct doorstep commodity delivery by FPS staff.',
+                selectInCart: 'Select in Cart'
             },
             ta: {
                 appTitle: 'தமிழ்நாடு ஸ்மார்ட் ரேஷன் & வரிசை மேலாண்மை',
@@ -1203,6 +1263,8 @@
                 lblPassword: 'கடவுச்சொல் (Password)',
                 btnSignIn: 'உள்நுழையவும்',
                 btnCreateAccount: 'கணக்கு உருவாக்கி நுழையவும்',
+                firstTimeReg: 'முதல் முறையா? ரேஷன் அட்டையை பதிவு செய்யவும்',
+                regUniqueDesc: 'ஒரு ரேஷன் அட்டை ஒருமுறை மட்டுமே பதிவு செய்ய முடியும்.',
                 lblFamilyHead: 'குடும்பத் தலைவர்',
                 navStocks: 'பொருட்கள் & கூடை (Cart)',
                 navQueue: 'வரிசை டோக்கன் & QR',
@@ -1214,31 +1276,69 @@
                 btnViewCart: 'கூடையைப் பார்',
                 addToCart: 'கூடையில் சேர்',
                 inCart: 'கூடையை மாற்று',
+                shopLocked: 'கடை முடக்கப்பட்டுள்ளது',
                 outOfStock: 'இருப்பு இல்லை',
                 inStock: 'இருப்பு உள்ளது',
                 lowStock: 'குறைந்த இருப்பு',
                 quotaLeft: 'மீதமுள்ள ஒதுக்கீடு',
                 shopStock: 'கடை இருப்பு',
                 freeLabel: 'இலவசம்',
+                shopClosed: 'கடை மூடப்பட்டுள்ளது',
+                lunchBreak: 'மதிய உணவு இடைவேளை',
+                shopClosedMsg: 'கடை மூடப்பட்டுள்ளது. பொருட்கள் வழங்கல் தற்காலிகமாக நிறுத்தப்பட்டுள்ளது.',
+                lunchBreakMsg: 'மதிய உணவு இடைவேளை. ஆர்டர்கள் நிறுத்தப்பட்டுள்ளன.',
                 cartTitle: 'உங்கள் ரேஷன் கூடை',
                 cartTotal: 'மொத்த தொகை',
+                cartEmpty: 'உங்கள் ரேஷன் கூடை காலியாக உள்ளது.',
+                deliverDoorstep: 'வீட்டுக்கே விநியோகம் (முதியோர் 60+)',
+                counterPickup: 'கடை கவுண்டரில் பெறுதல்',
+                counterPickupDesc: 'வீட்டு விநியோகம் 60 வயதுக்கு மேற்பட்ட முதியோருக்கானது.',
+                pickupSlotLabel: 'டோக்கன் பெறும் நேரத்தைத் தேர்ந்தெடுக்கவும்',
+                slotMorning: 'காலை நேரம் (8:00 – 11:00 AM)',
+                slotMidday: 'நண்பகல் நேரம் (11:00 AM – 2:00 PM)',
+                slotEvening: 'மாலை நேரம் (4:00 – 7:00 PM)',
+                payModeLabel: 'பணம் செலுத்தும் முறை',
+                payOnline: 'ஆன்லைன் செலுத்துகை (UPI)',
+                payCash: 'கவுண்டரில் ரொக்கம்',
+                btnProceedPurchase: 'ஆர்டர் உறுதி செய்',
                 kpiServing: 'தற்போதைய எண்',
                 kpiYourToken: 'உங்கள் டோக்கன்',
                 kpiAhead: 'உங்களுக்கு முன்',
                 kpiWait: 'காத்திருப்பு நேரம்',
-                fastBookTitle: '1-கிளிக் உடனடி டோக்கன் முன்பதிவு',
-                fastBookSub: 'நேரத்தைத் தேர்ந்தெடுத்து QR டோக்கனைப் பெறுங்கள்',
-                btnBookNow: 'உடனடி டோக்கன் பெறுக',
+                noActiveTokenTitle: 'டோக்கன் எதுவும் பெறப்படவில்லை',
+                noActiveTokenDesc: 'கூடையில் பொருட்களைச் சேர்த்து ஆர்டர் செய்யும் போது டோக்கன் தானாக உருவாக்கப்படும்.',
+                btnGoToStocks: 'பொருட்கள் பகுதிக்குச் செல்',
                 activePassTitle: 'நேரடி வரிசை & டிஜிட்டல் QR சீட்டு',
                 lblQueueStatus: 'தற்போதைய வரிசை நிலை',
+                yourTurnTitle: 'உங்கள் முறை வந்துவிட்டது! கவுண்டருக்கு செல்லவும்',
+                yourTurnSub: 'உடனடி சரிபார்ப்புக்கு இந்த QR குறியீட்டை காட்டவும்.',
+                aheadSub: 'எதிர்பார்க்கப்படும் காத்திருப்பு:',
                 btnPrintPass: 'அச்சிடு',
-                btnCancelToken: 'ரத்து செய்',
+                btnCancelToken: 'டோக்கன் ரத்து செய்',
                 historyHeading: 'எனது கொள்முதல் வரலாறு & ரசீதுகள்',
                 historySub: 'உங்கள் ரேஷன் அட்டைக்கான நேரடி கொள்முதல் விவரங்கள்',
+                noHistory: 'இதுவரை எந்த ஆர்டரும் செய்யப்படவில்லை',
+                paymentSuccess: 'பணம் செலுத்தப்பட்டது',
+                pendingApproval: 'நிர்வாகி ஒப்புதலுக்காக காத்திருக்கிறது',
+                doorstepBadge: 'வீட்டு விநியோகம் (60+)',
+                counterBadge: 'கவுண்டர்',
+                btnViewBillQr: 'ரசீது & QR காண்',
                 settingsHeading: 'மொழி & அணுகல்தன்மை அமைப்புகள்',
                 setLangTitle: 'செயலி மொழியைத் தேர்ந்தெடுக்கவும்',
-                setLargeText: 'பெரிய எழுத்துக்கள்',
-                setHighContrast: 'உயர் மாறுபாடு காட்சி'
+                setLargeText: 'பெரிய எழுத்துக்கள் (முதியோர் நலம்)',
+                setHighContrast: 'உயர் மாறுபாடு காட்சி',
+                matchedShop: 'அங்கீகரிக்கப்பட்ட ரேஷன் கடை',
+                assignedFps: 'ஒதுக்கப்பட்ட நியாய விலை கடை:',
+                matchedShopDesc: 'உங்கள் ஸ்மார்ட் கார்டு இந்த கடையில் பொருட்கள் பெற அங்கீகரிக்கப்பட்டுள்ளது.',
+                authorized: '● அங்கீகரிக்கப்பட்டது',
+                lockedShop: 'ஒதுக்கீட்டுக் கடை கட்டுப்பாடு',
+                lockedShopDesc: 'தமிழ்நாடு நுகர்பொருள் சட்டப்படி உங்கள் அட்டை இதற்கு மட்டுமே உரியது:',
+                lockedShopSuffix: 'வேறு கடைகளில் பொருட்கள் வாங்குவது தடுக்கப்பட்டுள்ளது.',
+                locked: '■ கொள்முதல் முடக்கப்பட்டது',
+                elderBannerTitle: 'முதியோர் நலத் திட்டம் (60+ வயது)',
+                elderBannerHead: 'வீட்டுக்கே ரேஷன் பொருட்கள் பெற தகுதியுடையவர்',
+                elderBannerDesc: 'ரேஷன் கடை ஊழியர் மூலம் உங்கள் வீட்டிற்கே பொருட்கள் விநியோகிக்கப்படும்.',
+                selectInCart: 'கூடையில் தேர்வு செய்க'
             },
             hi: {
                 appTitle: 'तमिलनाडु स्मार्ट राशन और कतार प्रणाली',
@@ -1252,6 +1352,8 @@
                 lblPassword: 'पासवर्ड',
                 btnSignIn: 'राशन पोर्टल में प्रवेश करें',
                 btnCreateAccount: 'खाता बनाएं और प्रवेश करें',
+                firstTimeReg: 'पहली बार आए हैं? कार्ड पंजीकृत करें',
+                regUniqueDesc: 'प्रत्येक राशन कार्ड केवल एक बार पंजीकृत हो सकता है।',
                 lblFamilyHead: 'परिवार के मुखिया',
                 navStocks: 'स्टॉक और कार्ट',
                 navQueue: 'कतार टोकन और QR',
@@ -1263,31 +1365,69 @@
                 btnViewCart: 'कार्ट देखें',
                 addToCart: 'कार्ट में जोड़ें',
                 inCart: 'कार्ट अपडेट करें',
+                shopLocked: 'दुकान लॉक है',
                 outOfStock: 'स्टॉक समाप्त',
                 inStock: 'उपलब्ध',
                 lowStock: 'कम स्टॉक',
                 quotaLeft: 'शेष कोटा',
                 shopStock: 'दुकान में स्टॉक',
                 freeLabel: 'मुफ़्त',
+                shopClosed: 'दुकान बंद है',
+                lunchBreak: 'भोजन अवकाश',
+                shopClosedMsg: 'उचित मूल्य दुकान बंद है। वितरण रुका हुआ है।',
+                lunchBreakMsg: 'भोजन अवकाश है। वितरण रुका हुआ है।',
                 cartTitle: 'आपका राशन कार्ट',
                 cartTotal: 'कुल देय राशि',
+                cartEmpty: 'आपकी राशन कार्ट खाली है।',
+                deliverDoorstep: 'घर पर डिलीवरी (वरिष्ठ नागरिक 60+)',
+                counterPickup: 'काउंटर पर संग्रह',
+                counterPickupDesc: 'होम डिलीवरी केवल 60 वर्ष से अधिक आयु के वरिष्ठ नागरिकों के लिए है।',
+                pickupSlotLabel: 'टोकन समय स्लॉट चुनें',
+                slotMorning: 'सुबह का स्लॉट (8:00 – 11:00 AM)',
+                slotMidday: 'दोपहर का स्लॉट (11:00 AM – 2:00 PM)',
+                slotEvening: 'शाम का स्लॉट (4:00 – 7:00 PM)',
+                payModeLabel: 'भुगतान का प्रकार',
+                payOnline: 'ऑनलाइन भुगतान (UPI)',
+                payCash: 'काउंटर पर नकद',
+                btnProceedPurchase: 'खरीद की पुष्टि करें',
                 kpiServing: 'वर्तमान टोकन',
                 kpiYourToken: 'आपका टोकन',
                 kpiAhead: 'आपसे आगे',
                 kpiWait: 'अनुमानित समय',
-                fastBookTitle: '1-टैप तत्काल टोकन बुकिंग',
-                fastBookSub: 'अपना समय चुनें और तुरंत QR पास पाएं',
-                btnBookNow: 'तुरंत टोकन बुक करें',
+                noActiveTokenTitle: 'कोई सक्रिय टोकन नहीं',
+                noActiveTokenDesc: 'ऑर्डर देते समय टोकन अपने आप बुक हो जाता है।',
+                btnGoToStocks: 'सामान सूची पर जाएं',
                 activePassTitle: 'लाइव कतार और डिजिटल QR पास',
                 lblQueueStatus: 'लाइव कतार स्थिति',
-                btnPrintPass: 'पास प्रिंट करें',
+                yourTurnTitle: 'आपकी बारी आ गई है! काउंटर पर जाएं',
+                yourTurnSub: 'सत्यापन के लिए डीलर को यह QR कोड दिखाएं।',
+                aheadSub: 'अनुमानित प्रतीक्षा समय:',
+                btnPrintPass: 'प्रिंट करें',
                 btnCancelToken: 'टोकन रद्द करें',
                 historyHeading: 'मेरा खरीदारी इतिहास और रसीदें',
                 historySub: 'आपके राशन कार्ड से जुड़ा वास्तविक रिकॉर्ड',
+                noHistory: 'कोई पिछला ऑर्डर नहीं मिला',
+                paymentSuccess: 'भुगतान सफल',
+                pendingApproval: 'डीलर स्वीकृति प्रतीक्षित',
+                doorstepBadge: 'घर पर डिलीवरी (60+)',
+                counterBadge: 'काउंटर',
+                btnViewBillQr: 'बिल और QR देखें',
                 settingsHeading: 'भाषा और एक्सेसिबिलिटी सेटिंग्स',
                 setLangTitle: 'ऐप की भाषा चुनें',
-                setLargeText: 'बड़ा टेक्स्ट',
-                setHighContrast: 'हाई-कंट्रास्ट मोड'
+                setLargeText: 'बड़ा टेक्स्ट (वरिष्ठ नागरिक)',
+                setHighContrast: 'हाई-कंट्रास्ट मोड',
+                matchedShop: 'आवंटित सरकारी दुकान',
+                assignedFps: 'निर्धारित उचित मूल्य दुकान:',
+                matchedShopDesc: 'आपका स्मार्ट कार्ड इस अधिकृत दुकान के लिए सत्यापित है।',
+                authorized: '● अधिकृत',
+                lockedShop: 'दुकान आवंटन प्रतिबंध',
+                lockedShopDesc: 'नियमों के तहत आपका कार्ड केवल इसके लिए आवंटित है:',
+                lockedShopSuffix: 'अन्य दुकानों से खरीद अवरुद्ध है।',
+                locked: '■ खरीद अवरुद्ध',
+                elderBannerTitle: 'वरिष्ठ नागरिक कल्याण योजना (60+ वर्ष)',
+                elderBannerHead: 'घर पर सीधे राशन वितरण के पात्र',
+                elderBannerDesc: 'राशन दुकान कर्मचारी सीधे आपके घर तक राशन पहुंचाएंगे।',
+                selectInCart: 'कार्ट में चुनें'
             },
             te: {
                 appTitle: 'తమిళనాడు స్మార్ట్ రేషన్ & క్యూ సిస్టమ్',
@@ -1301,6 +1441,8 @@
                 lblPassword: 'పాస్‌వర్డ్',
                 btnSignIn: 'పోర్టల్‌లోకి ప్రవేశించండి',
                 btnCreateAccount: 'ఖాతా సృష్టించి ప్రవేశించండి',
+                firstTimeReg: 'మొదటిసారా? కార్డు నమోదు చేయండి',
+                regUniqueDesc: 'ప్రతి రేషన్ కార్డు ఒకసారి మాత్రమే నమోదు చేయబడుతుంది.',
                 lblFamilyHead: 'కుటుంబ పెద్ద',
                 navStocks: 'సరుకులు & కార్ట్',
                 navQueue: 'క్యూ టోకెన్ & QR',
@@ -1312,31 +1454,69 @@
                 btnViewCart: 'కార్ట్ చూడండి',
                 addToCart: 'కార్ట్‌లో చేర్చు',
                 inCart: 'కార్ట్ అప్‌డేట్',
+                shopLocked: 'దుకాణం లాక్ చేయబడింది',
                 outOfStock: 'స్టాక్ లేదు',
                 inStock: 'అందుబాటులో ఉంది',
                 lowStock: 'తక్కువ స్టాక్',
                 quotaLeft: 'మిగిలిన కోటా',
                 shopStock: 'షాప్ స్టాక్',
                 freeLabel: 'ఉచితం',
+                shopClosed: 'దుకాణం మూసివేయబడింది',
+                lunchBreak: 'లంచ్ విరామం',
+                shopClosedMsg: 'రేషన్ దుకాణం మూసివేయబడింది.',
+                lunchBreakMsg: 'లంచ్ విరామం సమయంలో సరుకుల పంపిణీ నిలిపివేయబడింది.',
                 cartTitle: 'మీ రేషన్ కార్ట్',
                 cartTotal: 'మొత్తం',
+                cartEmpty: 'మీ రేషన్ కార్ట్ ఖాళీగా ఉంది.',
+                deliverDoorstep: 'ఇంటికే డెలివరీ (సీనియర్ సిటిజన్లు 60+)',
+                counterPickup: 'కౌంటర్ వద్ద పికప్',
+                counterPickupDesc: 'ఇంటి డెలివరీ 60 సంవత్సరాలు పైబడిన వారికి మాత్రమే.',
+                pickupSlotLabel: 'టోకెన్ సమయం ఎంచుకోండి',
+                slotMorning: 'ఉదయం (8:00 – 11:00 AM)',
+                slotMidday: 'మధ్యాహ్నం (11:00 AM – 2:00 PM)',
+                slotEvening: 'సాయంత్రం (4:00 – 7:00 PM)',
+                payModeLabel: 'చెల్లింపు విధానం',
+                payOnline: 'ఆన్‌లైన్ (UPI)',
+                payCash: 'కౌంటర్ వద్ద నగదు',
+                btnProceedPurchase: 'ఆర్డర్ ఖరారు చేయండి',
                 kpiServing: 'ప్రస్తుత టోకెన్',
                 kpiYourToken: 'మీ టోకెన్',
                 kpiAhead: 'మీ ముందు',
                 kpiWait: 'వేచి ఉండే సమయం',
-                fastBookTitle: 'తక్షణ టోకెన్ బుకింగ్',
-                fastBookSub: 'సమయాన్ని ఎంచుకుని QR పాస్ పొందండి',
-                btnBookNow: 'టోకెన్ బుక్ చేయండి',
+                noActiveTokenTitle: 'క్రియాశీల టోకెన్ లేదు',
+                noActiveTokenDesc: 'మీరు కార్ట్ ద్వారా ఆర్డర్ చేసినప్పుడు టోకెన్ ఆటోమేటిక్‌గా వస్తుంది.',
+                btnGoToStocks: 'సరుకుల విభాగానికి వెళ్ళండి',
                 activePassTitle: 'లైవ్ క్యూ & QR పాస్',
                 lblQueueStatus: 'ప్రస్తుత క్యూ స్థితి',
+                yourTurnTitle: 'మీ వంతు వచ్చింది! కౌంటర్‌కి వెళ్ళండి',
+                yourTurnSub: 'ధృవీకరణ కోసం ఈ QR కోడ్‌ను చూపించండి.',
+                aheadSub: 'అంచనా వేసిన సమయం:',
                 btnPrintPass: 'ప్రింట్ చేయండి',
                 btnCancelToken: 'రద్దు చేయండి',
                 historyHeading: 'నా కొనుగోలు చరిత్ర',
                 historySub: 'మీ రేషన్ కార్డ్ రికార్డులు',
+                noHistory: 'గతంలో ఆర్డర్లు ఏవీ లేవు',
+                paymentSuccess: 'చెల్లింపు పూర్తయింది',
+                pendingApproval: 'డీలర్ ఆమోదం కోసం వేచి ఉంది',
+                doorstepBadge: 'ఇంటి డెలివరీ (60+)',
+                counterBadge: 'కౌంటర్',
+                btnViewBillQr: 'బిల్ & QR చూడండి',
                 settingsHeading: 'భాష & సెట్టింగులు',
                 setLangTitle: 'యాప్ భాషను ఎంచుకోండి',
                 setLargeText: 'పెద్ద అక్షరాలు',
-                setHighContrast: 'హై-కాంట్రాస్ట్ మోడ్'
+                setHighContrast: 'హై-కాంట్రాస్ట్ మోడ్',
+                matchedShop: 'అనుమతించబడిన రేషన్ షాప్',
+                assignedFps: 'కేటాయించిన రేషన్ దుకాణం:',
+                matchedShopDesc: 'ఈ దుకాణంలో కోటా తీసుకోవడానికి మీ కార్డు ధృవీకరించబడింది.',
+                authorized: '● అధీకృతం',
+                lockedShop: 'దుకాణ కేటాయింపు నిబంధన',
+                lockedShopDesc: 'మీ రేషన్ కార్డు దీనికి మాత్రమే కేటాయించబడింది:',
+                lockedShopSuffix: 'ఇతర దుకాణాల నుండి సరుకులు తీసుకోవడం కుదరదు.',
+                locked: '■ నిరోధించబడింది',
+                elderBannerTitle: 'సీనియర్ సిటిజన్ సంక్షేమ పథకం (60+)',
+                elderBannerHead: 'ఇంటి వద్దకే రేషన్ పొందడానికి అర్హులు',
+                elderBannerDesc: 'షాప్ సిబ్బంది ద్వారా మీ ఇంటికే రేషన్ సరుకులు అందించబడతాయి.',
+                selectInCart: 'కార్ట్‌లో ఎంచుకోండి'
             },
             ml: {
                 appTitle: 'തമിഴ്നാട് സ്മാർട്ട് റേഷൻ & ക്യൂ സിസ്റ്റം',
@@ -1350,6 +1530,8 @@
                 lblPassword: 'പാസ്‌വേഡ്',
                 btnSignIn: 'പോർട്ടലിൽ പ്രവേശിക്കുക',
                 btnCreateAccount: 'അക്കൗണ്ട് ഉണ്ടാക്കുക',
+                firstTimeReg: 'ആദ്യമായിട്ടാണോ? രജിസ്റ്റർ ചെയ്യുക',
+                regUniqueDesc: 'ഓരോ റേഷൻ കാർഡും ഒരിക്കൽ മാത്രമേ രജിസ്റ്റർ ചെയ്യാനാകൂ.',
                 lblFamilyHead: 'കുടുംബനാഥൻ',
                 navStocks: 'സ്റ്റോക്കും കാർട്ടും',
                 navQueue: 'ടോക്കൺ & QR',
@@ -1361,31 +1543,69 @@
                 btnViewCart: 'കാർട്ട് കാണുക',
                 addToCart: 'കാർട്ടിലേക്ക് ചേർക്കുക',
                 inCart: 'കാർട്ട് പുതുക്കുക',
+                shopLocked: 'ഷോപ്പ് ലോക്ക് ചെയ്തു',
                 outOfStock: 'സ്റ്റോക്കില്ല',
                 inStock: 'ലഭ്യമാണ്',
                 lowStock: 'കുറഞ്ഞ സ്റ്റോക്ക്',
                 quotaLeft: 'ബാക്കിയുള്ള ക്വാട്ട',
                 shopStock: 'കടയിലെ സ്റ്റോക്ക്',
                 freeLabel: 'സൗജന്യം',
+                shopClosed: 'കട അടച്ചിരിക്കുന്നു',
+                lunchBreak: 'ഉച്ചഭക്ഷണ ഇടവേള',
+                shopClosedMsg: 'റേഷൻ കട അടച്ചിരിക്കുന്നു. വിതരണം താൽക്കാലികമായി നിർത്തി.',
+                lunchBreakMsg: 'ഉച്ചഭക്ഷണ ഇടവേളയാണ്. വിതരണം നിർത്തിവെച്ചു.',
                 cartTitle: 'നിങ്ങളുടെ റേഷൻ കാർട്ട്',
                 cartTotal: 'ആകെ തുക',
+                cartEmpty: 'നിങ്ങളുടെ കാർട്ട് ശൂന്യമാണ്.',
+                deliverDoorstep: 'വീട്ടുപടിക്കൽ വിതരണം (മുതിർന്ന പൗരന്മാർ 60+)',
+                counterPickup: 'കൗണ്ടറിൽ നിന്ന് വാങ്ങുക',
+                counterPickupDesc: 'വീട്ടുവിതരണം 60 വയസ്സിന് മുകളിലുള്ളവർക്ക് മാത്രം.',
+                pickupSlotLabel: 'ടോക്കൺ സമയം തിരഞ്ഞെടുക്കുക',
+                slotMorning: 'രാവിലെ (8:00 – 11:00 AM)',
+                slotMidday: 'ഉച്ചയ്ക്ക് (11:00 AM – 2:00 PM)',
+                slotEvening: 'വൈകുന്നേരം (4:00 – 7:00 PM)',
+                payModeLabel: 'പേയ്‌മെന്റ് രീതി',
+                payOnline: 'ഓൺലൈൻ (UPI)',
+                payCash: 'കൗണ്ടറിൽ പണം',
+                btnProceedPurchase: 'ഓർഡർ സ്ഥിരീകരിക്കുക',
                 kpiServing: 'ഇപ്പോൾ വിളിക്കുന്നത്',
                 kpiYourToken: 'നിങ്ങളുടെ ടോക്കൺ',
                 kpiAhead: 'മുന്നിലുള്ളവർ',
                 kpiWait: 'കാത്തിരിപ്പ് സമയം',
-                fastBookTitle: 'തൽക്ഷണ ടോക്കൺ ബുക്കിംഗ്',
-                fastBookSub: 'സമയം തിരഞ്ഞെടുത്ത് QR പാസ് നേടുക',
-                btnBookNow: 'ടോക്കൺ ബുക്ക് ചെയ്യുക',
+                noActiveTokenTitle: 'ടോക്കൺ ലഭ്യമല്ല',
+                noActiveTokenDesc: 'സാധനങ്ങൾ കാർട്ടിൽ ചേർത്ത് ഓർഡർ ചെയ്യുമ്പോൾ ടോക്കൺ ലഭ്യമാകും.',
+                btnGoToStocks: 'സാധനങ്ങളുടെ പട്ടിക കാണുക',
                 activePassTitle: 'ലൈവ് ക്യൂ & QR പാസ്',
                 lblQueueStatus: 'ക്യൂ നില',
+                yourTurnTitle: 'നിങ്ങളുടെ ഊഴമായി! കൗണ്ടറിലേക്ക് പോകുക',
+                yourTurnSub: 'പരിശോധനയ്ക്കായി ഈ QR കോഡ് ഡീലറെ കാണിക്കുക.',
+                aheadSub: 'പ്രതീക്ഷിക്കുന്ന സമയം:',
                 btnPrintPass: 'പ്രിന്റ് ചെയ്യുക',
                 btnCancelToken: 'റദ്ദാക്കുക',
                 historyHeading: 'എന്റെ വാങ്ങൽ ചരിത്രം',
                 historySub: 'നിങ്ങളുടെ റേഷൻ കാർഡിലെ വിവരങ്ങൾ',
+                noHistory: 'മുൻകാല ഓർഡറുകളൊന്നുമില്ല',
+                paymentSuccess: 'പണം നൽകി',
+                pendingApproval: 'ഡീലറുടെ അനുമതിക്കായി കാത്തിരിക്കുന്നു',
+                doorstepBadge: 'വീട്ടുപടിക്കൽ (60+)',
+                counterBadge: 'കൗണ്ടർ',
+                btnViewBillQr: 'ബില്ലും QR ഉം കാണുക',
                 settingsHeading: 'ഭാഷ & ക്രമീകരണങ്ങൾ',
                 setLangTitle: 'ഭാഷ തിരഞ്ഞെടുക്കുക',
                 setLargeText: 'വലിയ അക്ഷരങ്ങൾ',
-                setHighContrast: 'ഹൈ-കോൺട്രാസ്റ്റ് മോഡ്'
+                setHighContrast: 'ഹൈ-കോൺട്രാസ്റ്റ് മോഡ്',
+                matchedShop: 'അനുവദിക്കപ്പെട്ട റേഷൻ കട',
+                assignedFps: 'നിങ്ങളുടെ ഫെയർ പ്രൈസ് ഷോപ്പ്:',
+                matchedShopDesc: 'ഈ കടയിൽ നിന്ന് സാധനങ്ങൾ വാങ്ങാൻ കാർഡ് അംഗീകരിച്ചിരിക്കുന്നു.',
+                authorized: '● അംഗീകൃതം',
+                lockedShop: 'ഷോപ്പ് നിയന്ത്രണം',
+                lockedShopDesc: 'നിങ്ങളുടെ കാർഡ് ഈ കടയിൽ മാത്രമേ ഉപയോഗിക്കാനാകൂ:',
+                lockedShopSuffix: 'മറ്റ് കടകളിൽ നിന്ന് വാങ്ങാൻ സാധിക്കില്ല.',
+                locked: '■ തടഞ്ഞിരിക്കുന്നു',
+                elderBannerTitle: 'മുതിർന്ന പൗരക്ഷേമ പദ്ധതി (60+ വയസ്സ്)',
+                elderBannerHead: 'വീട്ടിൽ നേരിട്ട് റേഷൻ സാധനങ്ങൾ ലഭിക്കാൻ അർഹതയുണ്ട്',
+                elderBannerDesc: 'ജീവനക്കാർ റേഷൻ സാധനങ്ങൾ നിങ്ങളുടെ വീട്ടിൽ എത്തിച്ചുനൽകും.',
+                selectInCart: 'കാർട്ടിൽ തിരഞ്ഞെടുക്കുക'
             },
             kn: {
                 appTitle: 'ತಮಿಳುನಾಡು ಸ್ಮಾರ್ಟ್ ರೇಷನ್ ಮತ್ತು ಕ್ಯೂ ವ್ಯವಸ್ಥೆ',
@@ -1399,6 +1619,8 @@
                 lblPassword: 'ಪಾಸ್‌ವರ್ಡ್',
                 btnSignIn: 'ಪೋರ್ಟಲ್ ಪ್ರವೇಶಿಸಿ',
                 btnCreateAccount: 'ಖಾತೆ ರಚಿಸಿ',
+                firstTimeReg: 'ಮೊದಲ ಬಾರಿಗೆ ಬಂದಿದ್ದೀರಾ? ನೋಂದಾಯಿಸಿ',
+                regUniqueDesc: 'ಪ್ರತಿ ಪಡಿತರ ಚೀಟಿಯನ್ನು ಒಮ್ಮೆ ಮಾತ್ರ ನೋಂದಾಯಿಸಬಹುದು.',
                 lblFamilyHead: 'ಕುಟುಂಬದ ಮುಖ್ಯಸ್ಥರು',
                 navStocks: 'ಸ್ಟಾಕ್ ಮತ್ತು ಕಾರ್ಟ್',
                 navQueue: 'ಟೋಕನ್ ಮತ್ತು QR',
@@ -1410,31 +1632,69 @@
                 btnViewCart: 'ಕಾರ್ಟ್ ನೋಡಿ',
                 addToCart: 'ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಿ',
                 inCart: 'ಕಾರ್ಟ್ ನವೀಕರಿಸಿ',
+                shopLocked: 'ಅಂಗಡಿ ಲಾಕ್ ಆಗಿದೆ',
                 outOfStock: 'ಸ್ಟಾಕ್ ಇಲ್ಲ',
                 inStock: 'ಲಭ್ಯವಿದೆ',
                 lowStock: 'ಕಡಿಮೆ ಸ್ಟಾಕ್',
                 quotaLeft: 'ಉಳಿದ ಕೋಟಾ',
                 shopStock: 'ಅಂಗಡಿ ಸ್ಟಾಕ್',
                 freeLabel: 'ಉಚಿತ',
+                shopClosed: 'ಅಂಗಡಿ ಮುಚ್ಚಲಾಗಿದೆ',
+                lunchBreak: 'ಊಟದ ವಿರಾಮ',
+                shopClosedMsg: 'ಪಡಿತರ ಅಂಗಡಿ ಮುಚ್ಚಲಾಗಿದೆ. ವಿತರಣೆ ಸ್ಥಗಿತಗೊಂಡಿದೆ.',
+                lunchBreakMsg: 'ಊಟದ ವಿರಾಮದ ಸಮಯದಲ್ಲಿ ವಿತರಣೆ ಇರುವುದಿಲ್ಲ.',
                 cartTitle: 'ನಿಮ್ಮ ರೇಷನ್ ಕಾರ್ಟ್',
                 cartTotal: 'ಒಟ್ಟು ಮೊತ್ತ',
+                cartEmpty: 'ನಿಮ್ಮ ಕಾರ್ಟ್ ಖಾಲಿಯಾಗಿದೆ.',
+                deliverDoorstep: 'ಮನೆ ಬಾಗಿಲಿಗೆ ವಿತರಣೆ (ಹಿರಿಯ ನಾಗರಿಕರು 60+)',
+                counterPickup: 'ಕೌಂಟರ್‌ನಲ್ಲಿ ಪಡೆಯಿರಿ',
+                counterPickupDesc: 'ಮನೆ ಬಾಗಿಲಿಗೆ ವಿತರಣೆ 60 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ ಮಾತ್ರ.',
+                pickupSlotLabel: 'ಟೋಕನ್ ಸಮಯದ ಸ್ಲಾಟ್ ಆಯ್ಕೆಮಾಡಿ',
+                slotMorning: 'ಬೆಳಿಗ್ಗೆ (8:00 – 11:00 AM)',
+                slotMidday: 'ಮಧ್ಯಾಹ್ನ (11:00 AM – 2:00 PM)',
+                slotEvening: 'ಸಂಜೆ (4:00 – 7:00 PM)',
+                payModeLabel: 'ಪಾವತಿ ವಿಧಾನ',
+                payOnline: 'ಆನ್‌ಲೈನ್ ಪಾವತಿ (UPI)',
+                payCash: 'ಕೌಂಟರ್‌ನಲ್ಲಿ ನಗದು',
+                btnProceedPurchase: 'ಖರೀದಿಯನ್ನು ದೃಢೀಕರಿಸಿ',
                 kpiServing: 'ಪ್ರಸ್ತುತ ಟೋಕನ್',
                 kpiYourToken: 'ನಿಮ್ಮ ಟೋಕನ್',
                 kpiAhead: 'ನಿಮ್ಮ ಮುಂದೆ',
                 kpiWait: 'ನಿರೀಕ್ಷಿತ ಸಮಯ',
-                fastBookTitle: 'ತ್ವರಿತ ಟೋಕನ್ ಬುಕಿಂಗ್',
-                fastBookSub: 'ಸಮಯ ಆಯ್ಕೆ ಮಾಡಿ QR ಪಾಸ್ ಪಡೆಯಿರಿ',
-                btnBookNow: 'ಟೋಕನ್ ಬುಕ್ ಮಾಡಿ',
+                noActiveTokenTitle: 'ಯಾವುದೇ ಸಕ್ರಿಯ ಟೋಕನ್ ಇಲ್ಲ',
+                noActiveTokenDesc: 'ವಸ್ತುಗಳನ್ನು ಕಾರ್ಟ್ ಮೂಲಕ ಆರ್ಡರ್ ಮಾಡಿದಾಗ ಟೋಕನ್ ನೀಡಲಾಗುತ್ತದೆ.',
+                btnGoToStocks: 'ಸಾಮಗ್ರಿಗಳ ಪಟ್ಟಿಗೆ ಹೋಗಿ',
                 activePassTitle: 'ಲೈವ್ ಕ್ಯೂ ಮತ್ತು QR ಪಾಸ್',
                 lblQueueStatus: 'ಪ್ರಸ್ತುತ ಕ್ಯೂ ಸ್ಥಿತಿ',
-                btnPrintPass: 'ಪ್ರಿಂಟ್ ಮಾಡಿ',
+                yourTurnTitle: 'ನಿಮ್ಮ ಸರದಿ ಬಂದಿದೆ! ಕೌಂಟರ್‌ಗೆ ತೆರಳಿ',
+                yourTurnSub: 'ಪರಿಶೀಲನೆಗಾಗಿ ಈ QR ಕೋಡ್ ಅನ್ನು ಡೀಲರ್‌ಗೆ ತೋರಿಸಿ.',
+                aheadSub: 'ನಿರೀಕ್ಷಿತ ಕಾಯುವ ಸಮಯ:',
+                btnPrintPass: 'ಮುದ್ರಿಸಿ',
                 btnCancelToken: 'ರದ್ದುಮಾಡಿ',
                 historyHeading: 'ನನ್ನ ಖರೀದಿ ಇತಿಹಾಸ',
                 historySub: 'ನಿಮ್ಮ ರೇಷನ್ ಕಾರ್ಡ್ ದಾಖಲೆಗಳು',
+                noHistory: 'ಹಿಂದಿನ ಆರ್ಡರ್‌ಗಳಿಲ್ಲ',
+                paymentSuccess: 'ಪಾವತಿ ಯಶಸ್ವಿಯಾಗಿದೆ',
+                pendingApproval: 'ಡೀಲರ್ ಅನುಮೋದನೆಗೆ ಕಾಯಲಾಗುತ್ತಿದೆ',
+                doorstepBadge: 'ಮನೆ ವಿತರಣೆ (60+)',
+                counterBadge: 'ಕೌಂಟರ್',
+                btnViewBillQr: 'ಬಿಲ್ ಮತ್ತು QR ವೀಕ್ಷಿಸಿ',
                 settingsHeading: 'ಭಾಷೆ ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು',
                 setLangTitle: 'ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ',
                 setLargeText: 'ದೊಡ್ಡ ಅಕ್ಷರಗಳು',
-                setHighContrast: 'ಹೈ-ಕಾಂಟ್ರಾಸ್ಟ್ ಮೋಡ್'
+                setHighContrast: 'ಹೈ-ಕಾಂಟ್ರಾಸ್ಟ್ ಮೋಡ್',
+                matchedShop: 'ಅನುಮೋದಿತ ಪಡಿತರ ಅಂಗಡಿ',
+                assignedFps: 'ನಿಗದಿಪಡಿಸಿದ ನ್ಯಾಯಬೆಲೆ ಅಂಗಡಿ:',
+                matchedShopDesc: 'ಈ ಅಂಗಡಿಯಲ್ಲಿ ಪಡಿತರ ಪಡೆಯಲು ನಿಮ್ಮ ಕಾರ್ಡ್ ದೃಢೀಕರಿಸಲಾಗಿದೆ.',
+                authorized: '● ಅಧಿಕೃತ',
+                lockedShop: 'ಅಂಗಡಿ ಹಂಚಿಕೆ ನಿರ್ಬಂಧ',
+                lockedShopDesc: 'ನಿಮ್ಮ ಕಾರ್ಡ್ ಅನ್ನು ಈ ಕೆಳಗಿನ ಅಂಗಡಿಗೆ ಮಾತ್ರ ಹಂಚಿಕೆ ಮಾಡಲಾಗಿದೆ:',
+                lockedShopSuffix: 'ಬೇರೆ ಅಂಗಡಿಗಳಲ್ಲಿ ಪಡೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+                locked: '■ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ',
+                elderBannerTitle: 'ಹಿರಿಯ ನಾಗರಿಕರ ಕಲ್ಯಾಣ ಯೋಜನೆ (60+)',
+                elderBannerHead: 'ಮನೆ ಬಾಗಿಲಿಗೆ ಪಡಿತರ ಪಡೆಯಲು ಅರ್ಹರು',
+                elderBannerDesc: 'ಅಂಗಡಿ ಸಿಬ್ಬಂದಿ ನಿಮ್ಮ ಮನೆ ಬಾಗಿಲಿಗೆ ಸಾಮಗ್ರಿಗಳನ್ನು ತಲುಪಿಸುತ್ತಾರೆ.',
+                selectInCart: 'ಕಾರ್ಟ್‌ನಲ್ಲಿ ಆಯ್ಕೆಮಾಡಿ'
             },
             ar: {
                 appTitle: 'نظام التموين الذكي وإدارة الطوابير',
@@ -1448,6 +1708,8 @@
                 lblPassword: 'كلمة المرور',
                 btnSignIn: 'الدخول إلى البوابة',
                 btnCreateAccount: 'إنشاء حساب جديد',
+                firstTimeReg: 'مستخدم جديد؟ سجل بطاقتك الآن',
+                regUniqueDesc: 'يمكن تسجيل كل بطاقة تموينية مرة واحدة فقط.',
                 lblFamilyHead: 'رب الأسرة',
                 navStocks: 'المخزون والسلة',
                 navQueue: 'رقم الدور و QR',
@@ -1459,31 +1721,69 @@
                 btnViewCart: 'عرض السلة',
                 addToCart: 'أضف إلى السلة',
                 inCart: 'تحديث السلة',
+                shopLocked: 'المتجر مقفل',
                 outOfStock: 'نفد المخزون',
                 inStock: 'متوفر',
                 lowStock: 'مخزون منخفض',
                 quotaLeft: 'الحصة المتبقية',
                 shopStock: 'المخزون المتاح',
                 freeLabel: 'مجاني',
+                shopClosed: 'المتجر مغلق',
+                lunchBreak: 'استراحة الغداء',
+                shopClosedMsg: 'المتجر مغلق حالياً. تم إيقاف التوزيع مؤقتاً.',
+                lunchBreakMsg: 'استراحة غداء. تم تعليق الطلبات.',
                 cartTitle: 'سلة التموين الخاصة بك',
                 cartTotal: 'الإجمالي المستحق',
+                cartEmpty: 'سلة التموين فارغة.',
+                deliverDoorstep: 'توصيل للمنازل (كبار السن 60+)',
+                counterPickup: 'استلام من المنفذ',
+                counterPickupDesc: 'التوصيل المنزلي مخصص فقط لكبار السن (60 عاماً فما فوق).',
+                pickupSlotLabel: 'اختر الفترة الزمنية للدور',
+                slotMorning: 'الفترة الصباحية (8:00 – 11:00 AM)',
+                slotMidday: 'فترة الظهيرة (11:00 AM – 2:00 PM)',
+                slotEvening: 'الفترة المسائية (4:00 – 7:00 PM)',
+                payModeLabel: 'اختر طريقة الدفع',
+                payOnline: 'دفع إلكتروني (UPI)',
+                payCash: 'نقداً في المنفذ',
+                btnProceedPurchase: 'تأكيد عملية الشراء',
                 kpiServing: 'يُخدم الآن',
                 kpiYourToken: 'رقم دورك',
                 kpiAhead: 'أمامك',
                 kpiWait: 'الانتظار المتوقع',
-                fastBookTitle: 'حجز رقم دور فوري',
-                fastBookSub: 'اختر الفترة واحصل على بطاقة QR',
-                btnBookNow: 'احجز دورك الآن',
+                noActiveTokenTitle: 'لا يوجد دور فعال حالياً',
+                noActiveTokenDesc: 'يتم حجز رقم الدور تلقائياً بمجرد إتمام طلب السلع من السلة.',
+                btnGoToStocks: 'انتقل إلى قائمة السلع',
                 activePassTitle: 'حالة الدور وبطاقة QR',
                 lblQueueStatus: 'موقعك في الطابور',
+                yourTurnTitle: 'حان دورك الآن! يرجى التوجه إلى المنفذ',
+                yourTurnSub: 'أظهر رمز QR هذا للموزع للتحقق الفوري.',
+                aheadSub: 'الوقت المقدر:',
                 btnPrintPass: 'طباعة البطاقة',
                 btnCancelToken: 'إلغاء الدور',
                 historyHeading: 'سجل مشترياتي والإيصالات',
                 historySub: 'سجل مرتبط ببطاقة التموين الخاصة بك',
+                noHistory: 'لم يتم تقديم أي طلبات بعد',
+                paymentSuccess: 'تم الدفع بنجاح',
+                pendingApproval: 'بانتظار موافقة الموزع',
+                doorstepBadge: 'توصيل منزلي (60+)',
+                counterBadge: 'استلام بالمنفذ',
+                btnViewBillQr: 'عرض الفاتورة والرمز',
                 settingsHeading: 'اللغة وإعدادات العرض',
                 setLangTitle: 'اختر لغة التطبيق',
-                setLargeText: 'خط كبير',
-                setHighContrast: 'وضع التباين العالي'
+                setLargeText: 'خط كبير (لكبار السن)',
+                setHighContrast: 'وضع التباين العالي',
+                matchedShop: 'المنفذ الحكومي المعتمد',
+                assignedFps: 'منفذ التموين المخصص:',
+                matchedShopDesc: 'بطاقتك التموينية معتمدة ومخصصة للصرف من هذا المنفذ فقط.',
+                authorized: '● معتمد',
+                lockedShop: 'تقييد المنفذ التمويني',
+                lockedShopDesc: 'بموجب لوائح التموين، فإن بطاقتك التموينية مخصصة لـ:',
+                lockedShopSuffix: 'تم حظر الشراء من المنافذ الأخرى غير المخصصة.',
+                locked: '■ الشراء مقفل',
+                elderBannerTitle: 'برنامج رعاية كبار السن (60+ عاماً)',
+                elderBannerHead: 'مؤهل للتوصيل المباشر حتى باب المنزل',
+                elderBannerDesc: 'سيقوم موظف التموين بتوصيل حصتك المقررة إلى منزلك مباشرة.',
+                selectInCart: 'اختر في السلة'
             }
         };
 
@@ -1771,6 +2071,118 @@
                         <circle cx="160" cy="85" r="20" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/>
                         <path d="M151 85 L157 91 L170 78" fill="none" stroke="#064e3b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>`
+
+                black_chickpeas: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-bc" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fdf4ff"/><stop offset="100%" stop-color="#fae8ff"/></linearGradient>
+                            <linearGradient id="bowl-bc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#701a75"/><stop offset="100%" stop-color="#4a044e"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-bc)"/>
+                        <circle cx="270" cy="28" r="48" fill="#a21caf" opacity="0.12"/>
+                        <ellipse cx="160" cy="130" rx="72" ry="10" fill="#4a044e" opacity="0.18"/>
+                        <!-- Black Chickpeas Mound -->
+                        <path d="M96 76 C106 32, 136 24, 160 24 C184 24, 214 32, 224 76 Z" fill="#382110" stroke="#1c1007" stroke-width="1.5"/>
+                        <g fill="#27170b" stroke="#523218" stroke-width="1">
+                            <circle cx="158" cy="36" r="6"/><circle cx="142" cy="44" r="6"/><circle cx="174" cy="43" r="6"/>
+                            <circle cx="128" cy="55" r="6"/><circle cx="150" cy="54" r="6.2"/><circle cx="168" cy="55" r="6.2"/>
+                            <circle cx="190" cy="54" r="6"/><circle cx="116" cy="68" r="6"/><circle cx="138" cy="68" r="6"/>
+                            <circle cx="160" cy="68" r="6.2"/><circle cx="182" cy="68" r="6"/><circle cx="204" cy="68" r="6"/>
+                        </g>
+                        <path d="M88 76 C88 118, 120 128, 160 128 C200 128, 232 118, 232 76 Z" fill="url(#bowl-bc)"/>
+                        <path d="M90 76 Q160 88 230 76" fill="none" stroke="#f5d0fe" stroke-width="2.5" opacity="0.7"/>
+                    </svg>`,
+
+                white_chickpeas: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-wc" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fffbeb"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient>
+                            <linearGradient id="bowl-wc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#0369a1"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-wc)"/>
+                        <circle cx="50" cy="30" r="44" fill="#0284c7" opacity="0.12"/>
+                        <ellipse cx="160" cy="130" rx="72" ry="10" fill="#0369a1" opacity="0.18"/>
+                        <!-- White Chickpeas (Kabuli Chana) -->
+                        <path d="M96 76 C106 32, 136 24, 160 24 C184 24, 214 32, 224 76 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="1.2"/>
+                        <g fill="#fef9c3" stroke="#eab308" stroke-width="1">
+                            <circle cx="158" cy="36" r="6.5"/><circle cx="140" cy="44" r="6.5"/><circle cx="174" cy="43" r="6.5"/>
+                            <circle cx="126" cy="55" r="6.5"/><circle cx="148" cy="54" r="6.8"/><circle cx="168" cy="55" r="6.8"/>
+                            <circle cx="192" cy="54" r="6.5"/><circle cx="114" cy="68" r="6.5"/><circle cx="136" cy="68" r="6.5"/>
+                            <circle cx="158" cy="68" r="6.8"/><circle cx="180" cy="68" r="6.5"/><circle cx="204" cy="68" r="6.5"/>
+                        </g>
+                        <path d="M88 76 C88 118, 120 128, 160 128 C200 128, 232 118, 232 76 Z" fill="url(#bowl-wc)"/>
+                        <path d="M90 76 Q160 88 230 76" fill="none" stroke="#bae6fd" stroke-width="2.5" opacity="0.7"/>
+                    </svg>`,
+
+                groundnut: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-gn" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff7ed"/><stop offset="100%" stop-color="#ffedd5"/></linearGradient>
+                            <linearGradient id="bowl-gn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c2410c"/><stop offset="100%" stop-color="#9a3412"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-gn)"/>
+                        <circle cx="270" cy="30" r="46" fill="#ea580c" opacity="0.12"/>
+                        <ellipse cx="160" cy="130" rx="72" ry="10" fill="#7c2d12" opacity="0.18"/>
+                        <!-- Groundnut Kernels -->
+                        <path d="M96 76 C106 32, 136 25, 160 25 C184 25, 214 32, 224 76 Z" fill="#b45309" stroke="#78350f" stroke-width="1.2"/>
+                        <g fill="#d97706" stroke="#92400e" stroke-width="1">
+                            <ellipse cx="158" cy="36" rx="6.5" ry="4.5" transform="rotate(-15 158 36)"/>
+                            <ellipse cx="140" cy="45" rx="6.5" ry="4.5" transform="rotate(20 140 45)"/>
+                            <ellipse cx="174" cy="44" rx="6.5" ry="4.5" transform="rotate(-25 174 44)"/>
+                            <ellipse cx="126" cy="56" rx="6.5" ry="4.5" transform="rotate(10 126 56)"/>
+                            <ellipse cx="150" cy="56" rx="6.8" ry="4.8" transform="rotate(-10 150 56)"/>
+                            <ellipse cx="170" cy="56" rx="6.8" ry="4.8" transform="rotate(15 170 56)"/>
+                            <ellipse cx="192" cy="56" rx="6.5" ry="4.5" transform="rotate(-30 192 56)"/>
+                            <ellipse cx="114" cy="68" rx="6.5" ry="4.5" transform="rotate(25 114 68)"/>
+                            <ellipse cx="136" cy="68" rx="6.5" ry="4.5" transform="rotate(-15 136 68)"/>
+                            <ellipse cx="158" cy="68" rx="6.8" ry="4.8" transform="rotate(5 158 68)"/>
+                            <ellipse cx="180" cy="68" rx="6.5" ry="4.5" transform="rotate(-20 180 68)"/>
+                        </g>
+                        <path d="M88 76 C88 118, 120 128, 160 128 C200 128, 232 118, 232 76 Z" fill="url(#bowl-gn)"/>
+                        <path d="M90 76 Q160 88 230 76" fill="none" stroke="#fed7aa" stroke-width="2.5" opacity="0.7"/>
+                    </svg>`,
+
+                roasted_gram: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-rgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fefce8"/><stop offset="100%" stop-color="#fef9c3"/></linearGradient>
+                            <linearGradient id="bowl-rgm" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#047857"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-rgm)"/>
+                        <circle cx="50" cy="30" r="46" fill="#10b981" opacity="0.12"/>
+                        <ellipse cx="160" cy="130" rx="72" ry="10" fill="#065f46" opacity="0.18"/>
+                        <!-- Roasted Gram (Pottukadalai) -->
+                        <path d="M96 76 C106 32, 136 24, 160 24 C184 24, 214 32, 224 76 Z" fill="#fef08a" stroke="#eab308" stroke-width="1.2"/>
+                        <g fill="#fef08a" stroke="#ca8a04" stroke-width="1">
+                            <circle cx="158" cy="36" r="5"/><circle cx="142" cy="44" r="5"/><circle cx="174" cy="43" r="5"/>
+                            <circle cx="128" cy="55" r="5"/><circle cx="150" cy="54" r="5.2"/><circle cx="168" cy="55" r="5.2"/>
+                            <circle cx="190" cy="54" r="5"/><circle cx="116" cy="68" r="5"/><circle cx="138" cy="68" r="5"/>
+                            <circle cx="160" cy="68" r="5.2"/><circle cx="182" cy="68" r="5"/><circle cx="204" cy="68" r="5"/>
+                        </g>
+                        <path d="M88 76 C88 118, 120 128, 160 128 C200 128, 232 118, 232 76 Z" fill="url(#bowl-rgm)"/>
+                        <path d="M90 76 Q160 88 230 76" fill="none" stroke="#a7f3d0" stroke-width="2.5" opacity="0.7"/>
+                    </svg>`,
+
+                green_gram: `
+                    <svg viewBox="0 0 320 150" class="w-full h-36 block" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="bg-gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f0fdf4"/><stop offset="100%" stop-color="#dcfce7"/></linearGradient>
+                            <linearGradient id="bowl-gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#15803d"/><stop offset="100%" stop-color="#166534"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="150" fill="url(#bg-gg)"/>
+                        <circle cx="270" cy="30" r="46" fill="#22c55e" opacity="0.12"/>
+                        <ellipse cx="160" cy="130" rx="72" ry="10" fill="#14532d" opacity="0.18"/>
+                        <!-- Green Gram (Moong) -->
+                        <path d="M96 76 C106 32, 136 24, 160 24 C184 24, 214 32, 224 76 Z" fill="#4ade80" stroke="#16a34a" stroke-width="1.2"/>
+                        <g fill="#22c55e" stroke="#15803d" stroke-width="0.8">
+                            <circle cx="158" cy="36" r="4"/><circle cx="142" cy="44" r="4"/><circle cx="174" cy="43" r="4"/>
+                            <circle cx="128" cy="55" r="4"/><circle cx="150" cy="54" r="4.2"/><circle cx="168" cy="55" r="4.2"/>
+                            <circle cx="190" cy="54" r="4"/><circle cx="116" cy="68" r="4"/><circle cx="138" cy="68" r="4"/>
+                            <circle cx="160" cy="68" r="4.2"/><circle cx="182" cy="68" r="4"/><circle cx="204" cy="68" r="4"/>
+                        </g>
+                        <path d="M88 76 C88 118, 120 128, 160 128 C200 128, 232 118, 232 76 Z" fill="url(#bowl-gg)"/>
+                        <path d="M90 76 Q160 88 230 76" fill="none" stroke="#bbf7d0" stroke-width="2.5" opacity="0.7"/>
+                    </svg>`,
             };
             return templates[type] || templates.default;
         }
@@ -2371,6 +2783,13 @@
             const item = STATE.stocks.find(s => s.id === stockId);
             if (!user || !item) return;
 
+            // Block if shop is not OPEN
+    const currentStatus = (STATE.shop.shop_status || 'OPEN').toUpperCase();
+    if (currentStatus !== 'OPEN') {
+        showToast(currentStatus === 'LUNCH' ? t('lunchBreakMsg') : t('shopClosedMsg'), 'error');
+        return;
+    }
+
             if (!isUserAllocatedToThisShop(user)) {
                 showToast(`Cannot buy here! Your card is allocated to FPS #${user.allocated_shop}.`, 'error');
                 return;
@@ -2494,8 +2913,26 @@
             }).join('');
 
             totalEl.textContent = '₹' + total.toFixed(2);
-            btn.disabled = !isAllocated;
-            if (window.lucide) lucide.createIcons();
+            const shopStatus = (STATE.shop.shop_status || 'OPEN').toUpperCase();
+         const isShopOpen = shopStatus === 'OPEN';
+
+         // Disable if not allocated, not open, or cart is empty
+         btn.disabled = !isAllocated || !isShopOpen || !ids.length;
+
+         if (!isShopOpen && ids.length) {
+             // Change button appearance and text to display current shop hold status
+             btn.className = 'w-full bg-slate-300 text-slate-600 font-extrabold py-3.5 px-4 rounded-2xl shadow-none cursor-not-allowed flex items-center justify-center gap-2 text-xs uppercase tracking-wider';
+             btn.innerHTML = `<i data-lucide="clock" class="w-4 h-4 text-slate-500"></i><span>${shopStatus === 'LUNCH' ? (t('lunchBreakMsg') || 'FPS on Lunch Break — Orders Paused') : (t('shopClosedMsg') || 'FPS is Closed — Orders Paused')}</span>`;
+         } else if (!isAllocated) {
+             btn.className = 'w-full bg-slate-200 text-slate-400 font-extrabold py-3.5 px-4 rounded-2xl shadow-none cursor-not-allowed flex items-center justify-center gap-2 text-xs';
+             btn.innerHTML = `<i data-lucide="ban" class="w-4 h-4 text-slate-400"></i><span>${t('shopLocked') || 'Allocated Shop Locked'}</span>`;
+         } else {
+             btn.className = 'w-full bg-gradient-to-r from-tnEmerald-700 to-teal-700 hover:from-tnEmerald-800 hover:to-teal-800 disabled:opacity-50 text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm';
+             btn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 text-tnGold-300"></i><span>${t('btnProceedPurchase') || 'Proceed to Purchase'}</span>`;
+         }
+
+         if (window.lucide) lucide.createIcons();
+     }
         }
 
         function promptPurchaseConfirmation() {
@@ -2754,18 +3191,21 @@ if (!existingToken) {
             }
         }
 
-        function renderUserStocks() {
+       function renderUserStocks() {
             const user = getCurrentUser();
             const grid = document.getElementById('user-stocks-grid');
             if (!user || !grid) return;
 
             const isAllocated = isUserAllocatedToThisShop(user);
+            const shopStatus = (STATE.shop.shop_status || 'OPEN').toUpperCase();
+            const isShopOpen = shopStatus === 'OPEN';
+            const shopStatusLabel = shopStatus === 'LUNCH' ? (t('lunchBreak') || 'LUNCH BREAK') : (t('shopClosed') || 'SHOP CLOSED');
 
             grid.innerHTML = STATE.stocks.map(item => {
                 const used = getUserUsedQuota(user.ration_card, item.id);
                 const quotaLeft = Math.max(0, (Number(item.quota) || 0) - used);
                 const shopQty = Number(item.qty) || 0;
-                const maxAllowed = isAllocated ? Math.min(shopQty, quotaLeft) : 0;
+                const maxAllowed = (isAllocated && isShopOpen) ? Math.min(shopQty, quotaLeft) : 0;
                 const picked = Math.min(Math.max(1, maxAllowed), STATE.qtyPickers[item.id] || 1);
                 STATE.qtyPickers[item.id] = picked;
                 const inCartQty = STATE.cart[item.id] || 0;
@@ -2779,6 +3219,16 @@ if (!existingToken) {
                 const priceLabel = Number(item.price) <= 0
                     ? `<span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg">${t('freeLabel')}</span>`
                     : `<span class="text-sm font-extrabold font-mono text-slate-900">₹${Number(item.price).toFixed(2)}/${escapeHtml(item.unit)}</span>`;
+
+                // Determine button label based on shop status, allocation, and cart state
+                let actionBtnLabel = t('addToCart');
+                if (!isShopOpen) {
+                    actionBtnLabel = shopStatusLabel;
+                } else if (!isAllocated) {
+                    actionBtnLabel = t('shopLocked') || 'Shop Locked';
+                } else if (inCartQty > 0) {
+                    actionBtnLabel = t('inCart');
+                }
 
                 return `
                     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
@@ -2805,20 +3255,23 @@ if (!existingToken) {
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 pt-1">
-                                <div class="flex items-center border border-slate-300 rounded-xl overflow-hidden">
-                                    <button type="button" onclick="adjustPickerQty('${item.id}', -1, ${Math.max(1, maxAllowed)})" ${!isAllocated ? 'disabled' : ''} class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 font-bold text-sm">−</button>
-                                    <span id="picker-qty-${item.id}" class="px-3 text-sm font-extrabold font-mono">${maxAllowed > 0 ? picked : 0}</span>
-                                    <button type="button" onclick="adjustPickerQty('${item.id}', 1, ${Math.max(1, maxAllowed)})" ${!isAllocated ? 'disabled' : ''} class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 font-bold text-sm">+</button>
+                                <div class="flex items-center border border-slate-300 rounded-xl overflow-hidden ${!isShopOpen ? 'opacity-50 pointer-events-none' : ''}">
+                                    <button type="button" onclick="adjustPickerQty('${item.id}', -1, ${Math.max(1, maxAllowed)})" ${!isAllocated || !isShopOpen ? 'disabled' : ''} class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 font-bold text-sm">−</button>
+                                    <span id="picker-qty-${item.id}" class="px-3 text-sm font-extrabold font-mono">${maxAllowed > 0 && isShopOpen ? picked : 0}</span>
+                                    <button type="button" onclick="adjustPickerQty('${item.id}', 1, ${Math.max(1, maxAllowed)})" ${!isAllocated || !isShopOpen ? 'disabled' : ''} class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 font-bold text-sm">+</button>
                                 </div>
-                                <button type="button" onclick="addToCart('${item.id}')" ${maxAllowed <= 0 || !isAllocated ? 'disabled' : ''}
+                                <button type="button" onclick="addToCart('${item.id}')" ${maxAllowed <= 0 || !isAllocated || !isShopOpen ? 'disabled' : ''}
                                     class="flex-1 bg-tnEmerald-700 hover:bg-tnEmerald-800 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition">
-                                    ${!isAllocated ? 'Shop Locked' : (inCartQty > 0 ? t('inCart') : t('addToCart'))}
+                                    ${actionBtnLabel}
                                 </button>
                             </div>
                         </div>
                     </div>`;
             }).join('');
         }
+```[cite: 7, 9]
+
+---
 
         // =====================================================================
         // QUEUE & HISTORY
@@ -3315,6 +3768,7 @@ if (!existingToken) {
                 const mobSpan = document.querySelector('#sidebar-user-mobile span');
                 if (mobSpan) mobSpan.textContent = user.mobile || '—';
 
+                // 1. Translated Shop Allocation Banner
                 const allocBanner = document.getElementById('shop-allocation-banner');
                 const isAllocated = isUserAllocatedToThisShop(user);
 
@@ -3327,13 +3781,13 @@ if (!existingToken) {
                             </div>
                             <div>
                                 <span class="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">
-                                    GOVERNMENT MATCHED SHOP
+                                    ${t('matchedShop')}
                                 </span>
-                                <h4 class="font-extrabold text-sm text-slate-900 mt-0.5">Assigned Fair Price Shop: ${CURRENT_FPS_SHOP_CODE}</h4>
-                                <p class="text-xs text-slate-600">Your Smart Card is verified for ration quota collection at this authorized terminal.</p>
+                                <h4 class="font-extrabold text-sm text-slate-900 mt-0.5">${t('assignedFps')} ${CURRENT_FPS_SHOP_CODE}</h4>
+                                <p class="text-xs text-slate-600">${t('matchedShopDesc')}</p>
                             </div>
                         </div>
-                        <span class="text-xs font-bold bg-emerald-600 text-white px-3 py-1 rounded-xl shrink-0">● Authorized</span>`;
+                        <span class="text-xs font-bold bg-emerald-600 text-white px-3 py-1 rounded-xl shrink-0">${t('authorized')}</span>`;
                 } else {
                     allocBanner.className = 'rounded-2xl p-4 bg-rose-50 border-2 border-rose-400 text-rose-950 flex items-center justify-between gap-3 shadow-md';
                     allocBanner.innerHTML = `
@@ -3343,18 +3797,38 @@ if (!existingToken) {
                             </div>
                             <div>
                                 <span class="text-[10px] font-extrabold uppercase tracking-wider bg-rose-200 text-rose-900 px-2 py-0.5 rounded">
-                                    ALLOCATED SHOP RESTRICTION
+                                    ${t('lockedShop')}
                                 </span>
-                                <h4 class="font-black text-sm text-rose-900 mt-0.5">Cannot Purchase from FPS #${CURRENT_FPS_SHOP_CODE}</h4>
-                                <p class="text-xs text-rose-700">Under Tamil Nadu PDS laws, your Smart Card is strictly allocated to <strong>FPS #${escapeHtml(user.allocated_shop || 'OTHER')}</strong>. Purchasing from non-allocated shops is blocked.</p>
+                                <h4 class="font-black text-sm text-rose-900 mt-0.5">${t('shopLocked')}: FPS #${escapeHtml(user.allocated_shop || 'OTHER')}</h4>
+                                <p class="text-xs text-rose-700">${t('lockedShopDesc')} <strong>FPS #${escapeHtml(user.allocated_shop || 'OTHER')}</strong>. ${t('lockedShopSuffix')}</p>
                             </div>
                         </div>
-                        <span class="text-xs font-extrabold bg-rose-700 text-white px-3 py-1 rounded-xl shrink-0">■ Purchase Locked</span>`;
+                        <span class="text-xs font-extrabold bg-rose-700 text-white px-3 py-1 rounded-xl shrink-0">${t('locked')}</span>`;
                 }
 
+                // 2. Translated Senior Citizen Doorstep Banner
                 const elderBanner = document.getElementById('elder-delivery-banner');
-                if (isElder) elderBanner.classList.remove('hidden');
-                else elderBanner.classList.add('hidden');
+                if (isElder) {
+                    elderBanner.classList.remove('hidden');
+                    elderBanner.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow">
+                                <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-extrabold uppercase tracking-wider bg-amber-200 text-amber-900 px-2 py-0.5 rounded">
+                                    ${t('elderBannerTitle')}
+                                </span>
+                                <h4 class="font-extrabold text-sm text-amber-950 mt-0.5">${t('elderBannerHead')}</h4>
+                                <p class="text-xs text-amber-800">${t('elderBannerDesc')}</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="openCartDrawer()" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shrink-0 transition">
+                            ${t('selectInCart')}
+                        </button>`;
+                } else {
+                    elderBanner.classList.add('hidden');
+                }
 
                 updateCartBadges();
                 renderUserStocks();
