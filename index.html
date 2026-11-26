@@ -692,6 +692,10 @@
                         </div>
                         <div class="p-4 space-y-3">
                             <button onclick="adminCallNextToken()" class="w-full bg-tnGold-500 hover:bg-tnGold-400 text-slate-950 font-extrabold py-2.5 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-xs">
+                                <button type="button" onclick="adminSkipCurrentToken()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-4 rounded-xl border border-slate-300 transition flex items-center justify-center gap-2 text-xs">
+                                <i data-lucide="rotate-cw" class="w-4 h-4 text-slate-600"></i>
+                                <span>Skip Current Token (Move to End)</span>
+                            </button>
                                 <i data-lucide="skip-forward" class="w-4 h-4"></i>
                                 <span>Call Next Waiting Token</span>
                             </button>
@@ -774,6 +778,15 @@
                 <div id="cart-delivery-section" class="p-3.5 rounded-2xl border transition"></div>
 
                 <!-- PAYMENT MODE SELECTOR -->
+                <!-- TOKEN COLLECTION TIME SLOT (INTEGRATED) -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600">Select Token Pickup Slot</label>
+                    <select id="cart-token-slot" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs font-bold bg-white text-slate-800 outline-none focus:ring-2 focus:ring-tnEmerald-600">
+                        <option value="Morning (8:00 - 11:00 AM)">Morning Slot (8:00 – 11:00 AM)</option>
+                        <option value="Midday (11:00 AM - 2:00 PM)">Midday Slot (11:00 AM – 2:00 PM)</option>
+                        <option value="Evening (4:00 - 7:00 PM)">Evening Slot (4:00 – 7:00 PM)</option>
+                    </select>
+                </div>
                 <div class="space-y-2">
                     <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600">Select Payment Mode</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -961,7 +974,40 @@
             </div>
         </div>
     </div>
-
+    
+<!-- ===================================================================== -->
+    <!-- MODAL: CUSTOM STOCK ADJUST (ADMIN)                                    -->
+    <!-- ===================================================================== -->
+    <div id="stock-adjust-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-200 overflow-hidden animate-slide-up">
+            <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-sm" id="adjust-modal-title">Adjust Stock</h3>
+                    <p class="text-[11px] text-slate-400" id="adjust-modal-current">Current: 0</p>
+                </div>
+                <button type="button" onclick="closeStockAdjustModal()" class="text-white/75 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleCustomStockSubmit(event)" class="p-5 space-y-4">
+                <input type="hidden" id="adjust-stock-id">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Enter Quantity to Add (or Subtract)</label>
+                    <input type="number" id="adjust-stock-input" required placeholder="e.g. 25 (or -10 to reduce)"
+                        class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold font-mono outline-none focus:ring-2 focus:ring-slate-900">
+                    <p class="text-[10px] text-slate-500 mt-1">Use positive numbers to add, negative numbers to deduct.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="closeStockAdjustModal()" class="w-full py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100">
+                        Cancel
+                    </button>
+                    <button type="submit" class="w-full bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white font-bold py-2.5 rounded-xl text-xs shadow">
+                        Apply Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- ===================================================================== -->
     <!-- MODAL 4: ADD COMMODITY (ADMIN)                                        -->
     <!-- ===================================================================== -->
@@ -2479,7 +2525,18 @@
                 items.push({ id: item.id, en: item.en, qty, unit: item.unit, price: Number(item.price), subtotal: sub });
             }
 
-            STATE.pendingOrderStaging = { user, items, total, payMode, isDoorstep, doorstepAddress };
+            const slotSelect = document.getElementById('cart-token-slot');
+const chosenSlot = slotSelect ? slotSelect.value : 'Morning (8:00 - 11:00 AM)';
+
+STATE.pendingOrderStaging = { 
+    user, 
+    items, 
+    total, 
+    payMode, 
+    isDoorstep, 
+    doorstepAddress,
+    slot: chosenSlot 
+};
 
             const summaryEl = document.getElementById('confirm-modal-summary');
             summaryEl.innerHTML = `
@@ -2563,6 +2620,20 @@
                 };
 
                 await dbInsertOrder(orderObj);
+                // Auto-generate queue token linked to this purchase
+const existingToken = STATE.queue.find(q => q.ration_card === staging.user.ration_card && q.status !== 'completed');
+if (!existingToken) {
+    const maxTok = STATE.queue.reduce((m, q) => Math.max(m, Number(q.token) || 100), Number(STATE.shop.current_serving) || 100);
+    const newTok = {
+        token: maxTok + 1,
+        ration_card: staging.user.ration_card,
+        beneficiary_name: staging.user.name,
+        slot: staging.slot,
+        status: 'waiting',
+        created_at: new Date().toISOString()
+    };
+    await dbUpsertQueueToken(newTok);
+}
 
                 for (const oi of staging.items) {
                     const st = STATE.stocks.find(s => s.id === oi.id);
@@ -2916,7 +2987,31 @@
 
         // =====================================================================
         // ADMIN DEALER ACTIONS
-        // =====================================================================
+        function openStockAdjustModal(stockId) {
+            const item = STATE.stocks.find(s => s.id === stockId);
+            if (!item) return;
+            document.getElementById('adjust-stock-id').value = item.id;
+            document.getElementById('adjust-modal-title').textContent = `Adjust ${item.en}`;
+            document.getElementById('adjust-modal-current').textContent = `Current Stock: ${item.qty} ${item.unit}`;
+            document.getElementById('adjust-stock-input').value = '';
+            document.getElementById('stock-adjust-modal').style.display = 'flex';
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeStockAdjustModal() {
+            document.getElementById('stock-adjust-modal').style.display = 'none';
+        }
+
+        async function handleCustomStockSubmit(e) {
+            e.preventDefault();
+            const stockId = document.getElementById('adjust-stock-id').value;
+            const delta = Number(document.getElementById('adjust-stock-input').value) || 0;
+            if (delta !== 0) {
+                await adminAdjustStock(stockId, delta);
+                showToast(`Stock updated by ${delta > 0 ? '+' : ''}${delta}.`);
+            }
+            closeStockAdjustModal();
+        }// =====================================================================
         async function adminAdjustStock(stockId, delta) {
             const item = STATE.stocks.find(s => s.id === stockId);
             if (!item) return;
@@ -2990,6 +3085,51 @@
             await dbSaveShopState();
             playChime();
             showToast(`Now serving Token #${nextWaiting.token} (${nextWaiting.beneficiary_name})`);
+            renderAllViews();
+        }
+        async function adminSkipCurrentToken() {
+            const currentServing = STATE.queue.find(q => q.status === 'serving');
+            if (!currentServing) {
+                showToast('No active serving token to skip.', 'warn');
+                return;
+            }
+
+            // 1. Calculate the new end-of-queue token number
+            const highestTok = STATE.queue.reduce(
+                (m, q) => Math.max(m, Number(q.token) || 100), 
+                Number(STATE.shop.current_serving) || 100
+            );
+            const newPushedTokenNum = highestTok + 1;
+
+            // 2. Remove the current token number from the table
+            await dbDeleteQueueToken(currentServing.token);
+
+            // 3. Re-insert the beneficiary at the very end of the line
+            const rescheduled = {
+                ...currentServing,
+                token: newPushedTokenNum,
+                status: 'waiting',
+                created_at: new Date().toISOString()
+            };
+            await dbUpsertQueueToken(rescheduled);
+
+            // 4. Immediately advance to the next person waiting
+            const nextWaiting = STATE.queue
+                .filter(q => q.status === 'waiting' && q.token !== newPushedTokenNum)
+                .sort((a, b) => Number(a.token) - Number(b.token))[0];
+
+            if (nextWaiting) {
+                await dbUpsertQueueToken({ ...nextWaiting, status: 'serving' });
+                STATE.shop.current_serving = Number(nextWaiting.token);
+                await dbSaveShopState();
+                showToast(`Token #${currentServing.token} skipped to #${newPushedTokenNum}. Now serving #${nextWaiting.token}.`);
+            } else {
+                STATE.shop.current_serving = newPushedTokenNum;
+                await dbSaveShopState();
+                showToast(`Token #${currentServing.token} moved to end of queue (#${newPushedTokenNum}).`);
+            }
+
+            playChime();
             renderAllViews();
         }
 
@@ -3101,6 +3241,7 @@
                         <button type="button" onclick="adminAdjustStock('${s.id}', -10)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold">-10</button>
                         <button type="button" onclick="adminAdjustStock('${s.id}', 10)" class="px-2 py-1 rounded-lg bg-tnEmerald-100 hover:bg-tnEmerald-200 text-tnEmerald-900 text-xs font-bold">+10</button>
                         <button type="button" onclick="adminAdjustStock('${s.id}', 50)" class="px-2 py-1 rounded-lg bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white text-xs font-bold">+50</button>
+                        <button type="button" onclick="openStockAdjustModal('${s.id}')" class="px-2 py-1 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-900 text-xs font-bold">Custom ±</button>
                         <button type="button" onclick="adminDeleteCommodity('${s.id}')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold">✕</button>
                     </td>
                 </tr>`).join('');
