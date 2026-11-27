@@ -1130,25 +1130,7 @@
                 last_login: new Date().toISOString()
             }
         ];
-        
-            const clean = name.trim().toLowerCase();
-            if (nameDict[clean]) return nameDict[clean];
-
-            // Phonetic rule converter for any other registered names
-            let tName = name
-                .replace(/sh/gi, 'ஷ்')
-                .replace(/th/gi, 'த்')
-                .replace(/ch/gi, 'ச்')
-                .replace(/an\b/gi, 'ன்')
-                .replace(/am\b/gi, 'ம்')
-                .replace(/ar\b/gi, 'ர்')
-                .replace(/i\b/gi, 'ி')
-                .replace(/ee/gi, 'ீ')
-                .replace(/oo/gi, 'ூ');
-
-            return tName;
-        }
-        
+                      
         const TRANSLATIONS = {
             en: {
                 appTitle: 'Tamil Nadu Smart Ration & Queue System',
