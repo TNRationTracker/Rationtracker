@@ -412,39 +412,16 @@
                         </div>
                     </div>
 
-                    <div id="u-booking-card" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="bg-gradient-to-r from-tnEmerald-900 to-teal-800 px-6 py-4 text-white">
-                            <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2">
-                                <i data-lucide="sparkles" class="w-5 h-5 text-tnGold-400"></i>
-                                <span data-i18n="fastBookTitle">1-Tap Instant Queue Token Booking</span>
-                            </h2>
-                            <p class="text-xs text-emerald-200 mt-0.5" data-i18n="fastBookSub">Pick a convenient time window and generate your QR pass in 1 click</p>
+                    <div id="u-booking-card" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden p-6 text-center space-y-3">
+                        <div class="w-12 h-12 bg-tnEmerald-100 text-tnEmerald-900 rounded-2xl mx-auto flex items-center justify-center">
+                            <i data-lucide="ticket" class="w-6 h-6"></i>
                         </div>
-                        <div class="p-6 space-y-5">
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <button type="button" onclick="selectTimeSlot('Morning (8:00 - 11:00 AM)')" data-slot="Morning (8:00 - 11:00 AM)"
-                                    class="slot-pill p-3.5 rounded-2xl border-2 border-tnEmerald-600 bg-tnEmerald-50/70 text-left transition">
-                                    <span class="text-xs font-extrabold text-tnEmerald-900">Morning Slot</span>
-                                    <p class="text-sm font-bold text-slate-900 mt-1">8:00 – 11:00 AM</p>
-                                </button>
-                                <button type="button" onclick="selectTimeSlot('Midday (11:00 AM - 2:00 PM)')" data-slot="Midday (11:00 AM - 2:00 PM)"
-                                    class="slot-pill p-3.5 rounded-2xl border border-slate-200 hover:border-tnEmerald-400 bg-white text-left transition">
-                                    <span class="text-xs font-extrabold text-slate-600">Midday Slot</span>
-                                    <p class="text-sm font-bold text-slate-900 mt-1">11:00 AM – 2:00 PM</p>
-                                </button>
-                                <button type="button" onclick="selectTimeSlot('Evening (4:00 - 7:00 PM)')" data-slot="Evening (4:00 - 7:00 PM)"
-                                    class="slot-pill p-3.5 rounded-2xl border border-slate-200 hover:border-tnEmerald-400 bg-white text-left transition">
-                                    <span class="text-xs font-extrabold text-slate-600">Evening Slot</span>
-                                    <p class="text-sm font-bold text-slate-900 mt-1">4:00 – 7:00 PM</p>
-                                </button>
-                            </div>
-
-                            <button type="button" onclick="bookTokenOneTap()"
-                                class="w-full bg-gradient-to-r from-tnEmerald-700 to-teal-700 hover:from-tnEmerald-800 hover:to-teal-800 text-white font-extrabold py-4 px-6 rounded-2xl shadow-lg transition flex items-center justify-center gap-3 text-base">
-                                <i data-lucide="ticket" class="w-5 h-5 text-tnGold-300"></i>
-                                <span data-i18n="btnBookNow">Book Instant Token (1-Tap)</span>
-                            </button>
-                        </div>
+                        <h3 class="text-base font-extrabold text-slate-900" data-i18n="noActiveTokenTitle">No Active Queue Token</h3>
+                        <p class="text-xs text-slate-500 max-w-md mx-auto" data-i18n="noActiveTokenDesc">Tokens are issued automatically when you order ration items. Add commodities to your cart, pick your time slot, and check out to generate your QR token pass.</p>
+                        <button type="button" onclick="switchUserTab('stocks')" class="px-5 py-2.5 bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white rounded-xl text-xs font-bold transition shadow inline-flex items-center gap-2">
+                            <i data-lucide="shopping-basket" class="w-4 h-4"></i>
+                            <span data-i18n="btnGoToStocks">Go to Order Stocks & Cart</span>
+                        </button>
                     </div>
 
                     <div id="u-active-pass-card" class="hidden bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden">
@@ -602,17 +579,17 @@
 
                 <div class="flex items-center gap-2 flex-wrap">
                     <button onclick="switchAdminTab('command')" id="atab-command" class="admin-nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white">
-                        Live Stocks & Queue
+                        <span data-i18n="adminTabCommand">Live Stocks & Queue</span>
                     </button>
                     <button onclick="switchAdminTab('beneficiaries')" id="atab-beneficiaries" class="admin-nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
-                        <span>Beneficiaries & Orders</span>
+                        <span data-i18n="adminTabBeneficiaries">Beneficiaries & Orders</span>
                         <span id="admin-users-badge" class="bg-tnEmerald-600 text-white px-1.5 py-0.5 rounded-full text-[10px]">0</span>
                     </button>
                     <button onclick="switchAdminTab('asettings')" id="atab-asettings" class="admin-nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
-                        Shop Settings
+                        <span data-i18n="adminTabSettings">Shop Settings</span>
                     </button>
                     <button onclick="logoutAdmin()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold">
-                        Logout
+                        <span data-i18n="btnLogout">Sign Out</span>
                     </button>
                 </div>
             </div>
@@ -620,19 +597,19 @@
             <!-- ADMIN KPI ROW -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                    <p class="text-[11px] font-bold uppercase text-slate-400">Registered Beneficiaries</p>
+                    <p class="text-[11px] font-bold uppercase text-slate-400" data-i18n="aKpiUsers">Registered Beneficiaries</p>
                     <p id="a-kpi-users" class="text-3xl font-extrabold text-tnEmerald-800 font-mono mt-1">0</p>
                 </div>
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                    <p class="text-[11px] font-bold uppercase text-slate-400">Pending Payment Approval</p>
+                    <p class="text-[11px] font-bold uppercase text-slate-400" data-i18n="aKpiPendingPay">Pending Payment Approval</p>
                     <p id="a-kpi-pending-pay" class="text-3xl font-extrabold text-amber-600 font-mono mt-1">0</p>
                 </div>
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                    <p class="text-[11px] font-bold uppercase text-slate-400">Deliver to House (60+)</p>
+                    <p class="text-[11px] font-bold uppercase text-slate-400" data-i18n="aKpiDoorstep">Deliver to House (60+)</p>
                     <p id="a-kpi-doorstep" class="text-3xl font-extrabold text-teal-700 font-mono mt-1">0</p>
                 </div>
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                    <p class="text-[11px] font-bold uppercase text-slate-400">Queue Waiting</p>
+                    <p class="text-[11px] font-bold uppercase text-slate-400" data-i18n="aKpiWaiting">Queue Waiting</p>
                     <p id="a-kpi-waiting" class="text-3xl font-extrabold text-indigo-700 font-mono mt-1">0</p>
                 </div>
             </div>
@@ -644,23 +621,23 @@
                         <div>
                             <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
                                 <i data-lucide="package-plus" class="w-5 h-5 text-tnEmerald-700"></i>
-                                <span>Real-Time Shop Inventory</span>
+                                <span data-i18n="adminStockHeading">Real-Time Shop Inventory</span>
                             </h3>
-                            <p class="text-xs text-slate-500">Increases/decreases sync side-by-side with Beneficiary Portal instantly</p>
+                            <p class="text-xs text-slate-500" data-i18n="adminStockSub">Increases/decreases sync side-by-side with Beneficiary Portal instantly</p>
                         </div>
                         <button onclick="openAddCommodityModal()" class="bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5 self-start sm:self-auto">
                             <i data-lucide="plus" class="w-4 h-4"></i>
-                            <span>Add Commodity</span>
+                            <span data-i18n="btnAddCommodity">Add Commodity</span>
                         </button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-100 text-slate-600 text-[11px] uppercase tracking-wider border-b border-slate-200">
-                                    <th class="py-3 px-4 font-extrabold">Commodity</th>
-                                    <th class="py-3 px-4 font-extrabold">Rate</th>
-                                    <th class="py-3 px-4 font-extrabold">Live Stock</th>
-                                    <th class="py-3 px-4 font-extrabold text-right">Quick Adjust</th>
+                                    <th class="py-3 px-4 font-extrabold" data-i18n="thCommodity">Commodity</th>
+                                    <th class="py-3 px-4 font-extrabold" data-i18n="thRate">Rate</th>
+                                    <th class="py-3 px-4 font-extrabold" data-i18n="thLiveStock">Live Stock</th>
+                                    <th class="py-3 px-4 font-extrabold text-right" data-i18n="thQuickAdjust">Quick Adjust</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-stocks-tbody" class="divide-y divide-slate-200 text-sm"></tbody>
@@ -1241,6 +1218,22 @@
                 elderBannerHead: 'Deliver to House Eligible (Beneficiary 60+ Years)',
                 elderBannerDesc: 'You are eligible for direct doorstep commodity delivery by FPS staff.',
                 selectInCart: 'Select in Cart'
+                adminTabCommand: 'Live Stocks & Queue',
+                adminTabBeneficiaries: 'Beneficiaries & Orders',
+                adminTabSettings: 'Shop Settings',
+                aKpiUsers: 'Registered Beneficiaries',
+                aKpiPendingPay: 'Pending Payment Approval',
+                aKpiDoorstep: 'Deliver to House (60+)',
+                aKpiWaiting: 'Queue Waiting',
+                adminStockHeading: 'Real-Time Shop Inventory',
+                adminStockSub: 'Increases/decreases sync side-by-side with Beneficiary Portal instantly',
+                btnAddCommodity: 'Add Commodity',
+                thCommodity: 'Commodity',
+                thRate: 'Rate',
+                thLiveStock: 'Live Stock',
+                thQuickAdjust: 'Quick Adjust',
+                btnCustomAdjust: 'Custom ±',
+                btnConfirmPayReceipt: 'Confirm Payment Receipt',
             },
             ta: {
                 appTitle: 'தமிழ்நாடு ஸ்மார்ட் ரேஷன் & வரிசை மேலாண்மை',
@@ -1330,6 +1323,22 @@
                 elderBannerHead: 'வீட்டுக்கே ரேஷன் பொருட்கள் பெற தகுதியுடையவர்',
                 elderBannerDesc: 'ரேஷன் கடை ஊழியர் மூலம் உங்கள் வீட்டிற்கே பொருட்கள் விநியோகிக்கப்படும்.',
                 selectInCart: 'கூடையில் தேர்வு செய்க'
+                adminTabCommand: 'இருப்பு & வரிசை',
+                adminTabBeneficiaries: 'பயனாளர்கள் & ஆர்டர்கள்',
+                adminTabSettings: 'கடை அமைப்புகள்',
+                aKpiUsers: 'பதிவுசெய்த பயனாளர்கள்',
+                aKpiPendingPay: 'நிலுவை கட்டண ஒப்புதல்',
+                aKpiDoorstep: 'வீட்டு விநியோகம் (60+)',
+                aKpiWaiting: 'வரிசையில் காத்திருப்போர்',
+                adminStockHeading: 'நேரடி கடை இருப்பு விவரம்',
+                adminStockSub: 'பொருட்கள் இருப்பு மாற்றங்கள் பயனாளர் தளத்துடன் உடனடியாக இணையும்',
+                btnAddCommodity: 'புதிய பொருள் சேர்',
+                thCommodity: 'பொருட்கள்',
+                thRate: 'விலை',
+                thLiveStock: 'கடை இருப்பு',
+                thQuickAdjust: 'இருப்பு மாற்றம்',
+                btnCustomAdjust: 'அளவு ±',
+                btnConfirmPayReceipt: 'பணம் பெறுதலை உறுதிசெய்',
             },
             hi: {
                 appTitle: 'तमिलनाडु स्मार्ट राशन और कतार प्रणाली',
@@ -3051,20 +3060,21 @@ STATE.pendingOrderStaging = {
                 };
 
                 await dbInsertOrder(orderObj);
+
                 // Auto-generate queue token linked to this purchase
-const existingToken = STATE.queue.find(q => q.ration_card === staging.user.ration_card && q.status !== 'completed');
-if (!existingToken) {
-    const maxTok = STATE.queue.reduce((m, q) => Math.max(m, Number(q.token) || 100), Number(STATE.shop.current_serving) || 100);
-    const newTok = {
-        token: maxTok + 1,
-        ration_card: staging.user.ration_card,
-        beneficiary_name: staging.user.name,
-        slot: staging.slot,
-        status: 'waiting',
-        created_at: new Date().toISOString()
-    };
-    await dbUpsertQueueToken(newTok);
-}
+                const existingToken = STATE.queue.find(q => q.ration_card === staging.user.ration_card && q.status !== 'completed');
+                if (!existingToken) {
+                    const maxTok = STATE.queue.reduce((m, q) => Math.max(m, Number(q.token) || 100), Number(STATE.shop.current_serving) || 100);
+                    const newTok = {
+                        token: maxTok + 1,
+                        ration_card: staging.user.ration_card,
+                        beneficiary_name: staging.user.name,
+                        slot: staging.slot,
+                        status: 'waiting',
+                        created_at: new Date().toISOString()
+                    };
+                    await dbUpsertQueueToken(newTok);
+                }
 
                 for (const oi of staging.items) {
                     const st = STATE.stocks.find(s => s.id === oi.id);
@@ -3685,7 +3695,7 @@ if (!existingToken) {
                         <button type="button" onclick="adminAdjustStock('${s.id}', -10)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold">-10</button>
                         <button type="button" onclick="adminAdjustStock('${s.id}', 10)" class="px-2 py-1 rounded-lg bg-tnEmerald-100 hover:bg-tnEmerald-200 text-tnEmerald-900 text-xs font-bold">+10</button>
                         <button type="button" onclick="adminAdjustStock('${s.id}', 50)" class="px-2 py-1 rounded-lg bg-tnEmerald-700 hover:bg-tnEmerald-800 text-white text-xs font-bold">+50</button>
-                        <button type="button" onclick="openStockAdjustModal('${s.id}')" class="px-2 py-1 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-900 text-xs font-bold">Custom ±</button>
+                        <button type="button" onclick="openStockAdjustModal('${s.id}')" class="px-2 py-1 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-900 text-xs font-bold">${t('btnCustomAdjust') || 'Custom ±'}</button>
                         <button type="button" onclick="adminDeleteCommodity('${s.id}')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold">✕</button>
                     </td>
                 </tr>`).join('');
@@ -3710,7 +3720,7 @@ if (!existingToken) {
                                 ${isPending ? `
                                     <button type="button" onclick="adminConfirmPayment('${o.id}')" class="px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow transition flex items-center gap-1">
                                         <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                                        <span>Confirm Payment Receipt</span>
+                                        <span>${t('btnConfirmPayReceipt') || 'Confirm Payment Receipt'}</span>
                                     </button>
                                 ` : `
                                     <span class="text-emerald-700 font-extrabold text-[11px] flex items-center gap-1">
