@@ -1131,28 +1131,6 @@
             }
         ];
         
-         function localizeBeneficiaryName(name) {
-            const lang = STATE.prefs.lang || 'en';
-            if (lang !== 'ta' || !name) return name;
-
-            // Direct mapping for common Tamil names
-            const nameDict = {
-                'pandi': 'பாண்டி',
-                'priya': 'பிரியா',
-                'priya k': 'பிரியா கே',
-                'karthikeyan': 'கார்த்திகேயன்',
-                'karthikeyan s': 'கார்த்திகேயன் எஸ்',
-                'ananya': 'அனன்யா',
-                'ananya r': 'அனன்யா ஆர்',
-                'murugan': 'முருகன்',
-                'selvam': 'செல்வம்',
-                'kumar': 'குமார்',
-                'rajan': 'ராஜன்',
-                'lakshmi': 'லட்சுமி',
-                'suresh': 'சுரேஷ்',
-                'ramesh': 'ரமேஷ்'
-            };
-
             const clean = name.trim().toLowerCase();
             if (nameDict[clean]) return nameDict[clean];
 
@@ -3711,14 +3689,12 @@ STATE.pendingOrderStaging = {
                     }).join('')
                     : `<p class="text-xs text-slate-400">${t('noPurchasesYet') || 'No purchases yet.'}</p>`;
 
-                const localizedCardholderName = localizeBeneficiaryName(b.name);
-
                 return `
                     <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-2.5">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h4 class="font-extrabold text-slate-900 text-sm">${escapeHtml(localizedCardholderName)}</h4>
+                                    <h4 class="font-extrabold text-slate-900 text-sm">${escapeHtml(b.name)}</h4>
                                     <span class="text-[10px] font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full">${t('lblAge') || 'Age'}: ${b.age || '—'}</span>
                                     ${Number(b.age) >= 60 ? `<span class="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">${t('doorstepBadge') || 'Doorstep 60+'}</span>` : ''}
                                 </div>
@@ -3730,7 +3706,7 @@ STATE.pendingOrderStaging = {
                     </div>`;
             }).join('');
         }
-
+        
         function renderAdminViews() {
             const loginScreen = document.getElementById('admin-login-screen');
             const workspace = document.getElementById('admin-workspace');
