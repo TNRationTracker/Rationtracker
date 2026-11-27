@@ -1085,7 +1085,7 @@
 
         const LKEYS = {
             BENEFICIARIES: 'tnpds_live_beneficiaries_v3',
-            STOCKS: 'tnpds_live_stocks_v3',
+            STOCKS: 'tnpds_live_stocks_v4',
             ORDERS: 'tnpds_live_orders_v3',
             QUEUE: 'tnpds_live_queue_v3',
             SHOP: 'tnpds_live_shop_v3',
@@ -2263,16 +2263,20 @@
         async function seedInitialCloudDataIfEmpty() {
             if (!isCloudConfigured || !supabaseClient) return;
             try {
-                const { data: existingStocks } = await supabaseClient.from('stocks').select('id').limit(1);
-                if (existingStocks && existingStocks.length === 0) {
-                    await supabaseClient.from('stocks').insert(DEFAULT_STOCKS);
+                const { data: existingStocks } = await supabaseClient.from('stocks').select('id');
+                if (existingStocks) {
+                    const existingIds = new Set(existingStocks.map(s => s.id));
+                    const missingStocks = DEFAULT_STOCKS.filter(s => !existingIds.has(s.id));
+                    if (missingStocks.length > 0) {
+                        await supabaseClient.from('stocks').insert(missingStocks);
+                    }
                 }
                 const { data: existingShop } = await supabaseClient.from('shop_state').select('shop_code').eq('shop_code', CURRENT_FPS_SHOP_CODE).maybeSingle();
                 if (!existingShop) {
                     await supabaseClient.from('shop_state').insert(STATE.shop);
                 }
             } catch (e) {
-                console.warn('Cloud seed skipped:', e);
+                console.warn('Cloud seed error:', e);
             }
         }
 
