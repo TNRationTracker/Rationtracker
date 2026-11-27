@@ -572,9 +572,9 @@
                         <i data-lucide="store" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h2 class="font-extrabold text-slate-900 text-base">FPS #TN07CS8014 — Live Dealer Command Center</h2>
-                        <p class="text-xs text-slate-500">Confirm payment receipts, monitor deliveries, manage stock and queue</p>
-                    </div>
+                        <h2 data-i18n="adminHeadTitle" class="font-extrabold text-slate-900 text-base">FPS #TN07CS8014 — Live Dealer Command Center</h2>
+                        <p data-i18n="adminHeadSub" class="text-xs text-slate-500">Confirm payment receipts, monitor deliveries, manage stock and queue</p>
+                   </div>
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap">
@@ -695,9 +695,9 @@
                         <div>
                             <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
                                 <i data-lucide="users" class="w-5 h-5 text-tnEmerald-700"></i>
-                                <span>Registered Beneficiaries & Dispensation Records</span>
+                                <span data-i18n="adminBenTitle">Registered Beneficiaries & Dispensation Records</span>
                             </h3>
-                            <p class="text-xs text-slate-500 mt-0.5">Every beneficiary who registers or logs in appears with verified age, allocated shop, and order history</p>
+                            <p data-i18n="adminBenSub" class="text-xs text-slate-500 mt-0.5">Every beneficiary who registers or logs in appears with verified age, allocated shop, and order history</p>
                         </div>
                         <div class="relative w-full sm:w-72">
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
@@ -1130,7 +1130,47 @@
                 last_login: new Date().toISOString()
             }
         ];
+        
+         function localizeBeneficiaryName(name) {
+            const lang = STATE.prefs.lang || 'en';
+            if (lang !== 'ta' || !name) return name;
 
+            // Direct mapping for common Tamil names
+            const nameDict = {
+                'pandi': 'பாண்டி',
+                'priya': 'பிரியா',
+                'priya k': 'பிரியா கே',
+                'karthikeyan': 'கார்த்திகேயன்',
+                'karthikeyan s': 'கார்த்திகேயன் எஸ்',
+                'ananya': 'அனன்யா',
+                'ananya r': 'அனன்யா ஆர்',
+                'murugan': 'முருகன்',
+                'selvam': 'செல்வம்',
+                'kumar': 'குமார்',
+                'rajan': 'ராஜன்',
+                'lakshmi': 'லட்சுமி',
+                'suresh': 'சுரேஷ்',
+                'ramesh': 'ரமேஷ்'
+            };
+
+            const clean = name.trim().toLowerCase();
+            if (nameDict[clean]) return nameDict[clean];
+
+            // Phonetic rule converter for any other registered names
+            let tName = name
+                .replace(/sh/gi, 'ஷ்')
+                .replace(/th/gi, 'த்')
+                .replace(/ch/gi, 'ச்')
+                .replace(/an\b/gi, 'ன்')
+                .replace(/am\b/gi, 'ம்')
+                .replace(/ar\b/gi, 'ர்')
+                .replace(/i\b/gi, 'ி')
+                .replace(/ee/gi, 'ீ')
+                .replace(/oo/gi, 'ூ');
+
+            return tName;
+        }
+        
         const TRANSLATIONS = {
             en: {
                 appTitle: 'Tamil Nadu Smart Ration & Queue System',
@@ -1236,6 +1276,17 @@
                 thQuickAdjust: 'Quick Adjust',
                 btnCustomAdjust: 'Custom ±',
                 btnConfirmPayReceipt: 'Confirm Payment Receipt',
+                adminHeadTitle: 'FPS #TN07CS8014 — Live Dealer Command Center',
+                adminHeadSub: 'Confirm payment receipts, monitor deliveries, manage stock and queue',
+                adminBenTitle: 'Registered Beneficiaries & Dispensation Records',
+                adminBenSub: 'Every beneficiary who registers or logs in appears with verified age, allocated shop, and order history',
+                adminSearchHolder: 'Search Name, Ration No, Mobile...',
+                lblAge: 'Age',
+                lblMobile: 'Mobile',
+                lblAllocatedFps: 'Allocated FPS',
+                lblOrdersCount: 'Orders',
+                paidBadge: 'Paid',
+                noPurchasesYet: 'No purchases yet.',
             },
             ta: {
                 appTitle: 'தமிழ்நாடு ஸ்மார்ட் ரேஷன் & வரிசை மேலாண்மை',
@@ -1341,6 +1392,17 @@
                 thQuickAdjust: 'இருப்பு மாற்றம்',
                 btnCustomAdjust: 'அளவு ±',
                 btnConfirmPayReceipt: 'பணம் பெறுதலை உறுதிசெய்',
+                adminHeadTitle: 'FPS #TN07CS8014 — நேரடி நியாயவிலைக் கடை கட்டுப்பாட்டு மையம்',
+                adminHeadSub: 'பணம் பெறுதல் சரிபார்ப்பு, விநியோக கண்காணிப்பு, இருப்பு & வரிசை மேலாண்மை',
+                adminBenTitle: 'பதிவுசெய்யப்பட்ட பயனாளர்கள் & விநியோகப் பதிவேடு',
+                adminBenSub: 'பதிவு செய்த குடும்ப அட்டைதாரர்களின் வயது, கடை ஒதுக்கீடு மற்றும் கொள்முதல் விவரங்கள்',
+                adminSearchHolder: 'பெயர், அட்டை எண், அலைபேசி எண் தேடுக...',
+                lblAge: 'வயது',
+                lblMobile: 'அலைபேசி',
+                lblAllocatedFps: 'ஒதுக்கப்பட்ட கடை',
+                lblOrdersCount: 'ஆர்டர்கள்',
+                paidBadge: 'செலுத்தப்பட்டது',
+                noPurchasesYet: 'இதுவரை எந்தப் பொருளும் வாங்கப்படவில்லை.',
             },
             hi: {
                 appTitle: 'तमिलनाडु स्मार्ट राशन और कतार प्रणाली',
@@ -2538,6 +2600,8 @@
                 statusBadge.textContent = '■ CLOSED';
                 statusBadge.className = 'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/30';
             }
+        const sInput = document.getElementById('admin-user-search');
+        if (sInput) sInput.placeholder = t('adminSearchHolder');
         }
 
         function setAppLanguage(lang) {
@@ -3612,7 +3676,7 @@ STATE.pendingOrderStaging = {
             );
 
             if (!filtered.length) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No beneficiaries found.</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">${t('noHistory') || 'No beneficiaries found.'}</div>`;
                 return;
             }
 
@@ -3620,40 +3684,47 @@ STATE.pendingOrderStaging = {
                 const orders = STATE.orders.filter(o => o.ration_card === b.ration_card);
                 const ordersHtml = orders.length
                     ? orders.map(o => {
-                        const items = (Array.isArray(o.items) ? o.items : []).map(i => `${i.en} × ${i.qty}`).join(', ');
+                        const items = (Array.isArray(o.items) ? o.items : []).map(i => {
+                            const foundStock = STATE.stocks.find(s => s.id === i.id || s.en.toLowerCase() === (i.en || '').toLowerCase());
+                            const localizedItemName = foundStock ? getStockLabel(foundStock) : (i.en || '');
+                            return `${localizedItemName} × ${i.qty}`;
+                        }).join(', ');
+
                         const isPaid = o.payment_status === 'PAID_VERIFIED' || o.is_confirmed_by_dealer;
                         return `
                             <div class="text-xs bg-white p-2.5 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div>
                                     <span class="font-bold text-slate-800">${escapeHtml(o.id)}</span>: ${escapeHtml(items)}
-                                    <span class="block text-[11px] text-slate-400">${formatDateTime(o.created_at)} • ${o.is_doorstep ? 'Doorstep (60+)' : 'Counter'}</span>
+                                    <span class="block text-[11px] text-slate-400">${formatDateTime(o.created_at)} • ${o.is_doorstep ? (t('doorstepBadge') || 'Doorstep (60+)') : (t('counterBadge') || 'Counter')}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="font-mono font-bold text-tnEmerald-800">₹${Number(o.total_amount || 0).toFixed(2)}</span>
                                     ${!isPaid ? `
                                         <button type="button" onclick="adminConfirmPayment('${o.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-lg text-[10px] transition shadow">
-                                            Confirm Payment
+                                            ${t('btnConfirmPayReceipt') || 'Confirm Payment'}
                                         </button>
                                     ` : `
-                                        <span class="text-emerald-700 font-extrabold text-[10px] bg-emerald-100 px-2 py-0.5 rounded-full">Paid</span>
+                                        <span class="text-emerald-700 font-extrabold text-[10px] bg-emerald-100 px-2.5 py-0.5 rounded-full">${t('paidBadge') || 'Paid'}</span>
                                     `}
                                 </div>
                             </div>`;
                     }).join('')
-                    : `<p class="text-xs text-slate-400">No purchases yet.</p>`;
+                    : `<p class="text-xs text-slate-400">${t('noPurchasesYet') || 'No purchases yet.'}</p>`;
+
+                const localizedCardholderName = localizeBeneficiaryName(b.name);
 
                 return `
                     <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-2.5">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h4 class="font-extrabold text-slate-900 text-sm">${escapeHtml(b.name)}</h4>
-                                    <span class="text-[10px] font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full">Age: ${b.age || '—'}</span>
-                                    ${Number(b.age) >= 60 ? '<span class="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">Doorstep 60+</span>' : ''}
+                                    <h4 class="font-extrabold text-slate-900 text-sm">${escapeHtml(localizedCardholderName)}</h4>
+                                    <span class="text-[10px] font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full">${t('lblAge') || 'Age'}: ${b.age || '—'}</span>
+                                    ${Number(b.age) >= 60 ? `<span class="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">${t('doorstepBadge') || 'Doorstep 60+'}</span>` : ''}
                                 </div>
-                                <p class="font-mono text-xs text-slate-500 mt-0.5">${escapeHtml(b.ration_card)} • Mobile: ${escapeHtml(b.mobile)} • Allocated FPS: <strong class="text-tnEmerald-900">${escapeHtml(b.allocated_shop || CURRENT_FPS_SHOP_CODE)}</strong></p>
+                                <p class="font-mono text-xs text-slate-500 mt-0.5">${escapeHtml(b.ration_card)} • ${t('lblMobile') || 'Mobile'}: ${escapeHtml(b.mobile)} • ${t('lblAllocatedFps') || 'Allocated FPS'}: <strong class="text-tnEmerald-900 font-bold">${escapeHtml(b.allocated_shop || CURRENT_FPS_SHOP_CODE)}</strong></p>
                             </div>
-                            <span class="text-xs font-bold bg-tnEmerald-100 text-tnEmerald-900 px-2.5 py-1 rounded-full">${orders.length} Orders</span>
+                            <span class="text-xs font-bold bg-tnEmerald-100 text-tnEmerald-900 px-2.5 py-1 rounded-full">${orders.length} ${t('lblOrdersCount') || 'Orders'}</span>
                         </div>
                         <div class="space-y-1.5">${ordersHtml}</div>
                     </div>`;
